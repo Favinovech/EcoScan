@@ -5,8 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import dagger.hilt.android.AndroidEntryPoint
-import pe.ecoscan.app.core.designsystem.DesignSystemCatalog
 import pe.ecoscan.app.core.designsystem.theme.EcoScanTheme
+import pe.ecoscan.app.presentation.history.HistoryRoute
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             EcoScanTheme {
                 // Se reemplaza por la navegación real en la Parte 5 del sprint.
-                DesignSystemCatalog()
+                HistoryRoute()
             }
         }
     }
