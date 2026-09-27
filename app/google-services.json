@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "867304168095",
+    "project_id": "ecoscan-af8e9",
+    "storage_bucket": "ecoscan-af8e9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:867304168095:android:1237af4bd9d655d787a0aa",
+        "android_client_info": {
+          "package_name": "pe.ecoscan.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFsn_i298l-AYjnRu-m7qvNs9s2pKkQ10"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
