@@ -37,7 +37,7 @@ fun EcoScanButton(
             CircularProgressIndicator(
                 modifier = Modifier.size(18.dp),
                 strokeWidth = 2.dp,
-                color = LocalContentColorForVariant(variant)
+                color = contentColorForVariant(variant)
             )
         } else {
             Text(text = text)
@@ -69,7 +69,7 @@ fun EcoScanButton(
 }
 
 @Composable
-private fun LocalContentColorForVariant(variant: EcoScanButtonVariant) = when (variant) {
+private fun contentColorForVariant(variant: EcoScanButtonVariant) = when (variant) {
     EcoScanButtonVariant.PRIMARY -> MaterialTheme.colorScheme.onPrimary
     EcoScanButtonVariant.TONAL -> MaterialTheme.colorScheme.onSecondaryContainer
     EcoScanButtonVariant.TEXT -> MaterialTheme.colorScheme.primary

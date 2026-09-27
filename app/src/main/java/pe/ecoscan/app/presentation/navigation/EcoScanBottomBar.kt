@@ -6,6 +6,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import pe.ecoscan.app.core.designsystem.theme.EcoScanTheme
 
@@ -18,16 +19,17 @@ fun EcoScanBottomBar(
     NavigationBar(modifier = modifier) {
         EcoScanDestination.bottomBarDestinations.forEach { destination ->
             val isSelected = currentRoute == destination.route
+            val label = stringResource(destination.labelRes)
             NavigationBarItem(
                 selected = isSelected,
                 onClick = { onDestinationSelected(destination) },
                 icon = {
                     Icon(
                         imageVector = if (isSelected) destination.selectedIcon else destination.unselectedIcon,
-                        contentDescription = destination.label
+                        contentDescription = label
                     )
                 },
-                label = { Text(text = destination.label) }
+                label = { Text(text = label) }
             )
         }
     }

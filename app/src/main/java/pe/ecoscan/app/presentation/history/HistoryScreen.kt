@@ -12,10 +12,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pe.ecoscan.app.R
 import pe.ecoscan.app.core.common.toFormattedDate
 import pe.ecoscan.app.core.designsystem.component.EcoScanCard
 import pe.ecoscan.app.core.designsystem.component.EcoScanEmptyState
@@ -27,6 +29,10 @@ import pe.ecoscan.app.domain.model.WasteRecord
 
 // Punto de entrada con Hilt. Se llama solo aquí para que HistoryScreen sea previsualizable
 // y testeable sin necesidad de un contenedor de inyección.
+// hiltViewModel() de androidx.hilt.navigation.compose está deprecado a favor de
+// androidx.hilt.lifecycle.viewmodel.compose, pero ese artefacto sigue en alpha/beta;
+// nos quedamos en la versión estable hasta que haya un release estable.
+@Suppress("DEPRECATION")
 @Composable
 fun HistoryRoute(
     modifier: Modifier = Modifier,
@@ -43,13 +49,13 @@ fun HistoryScreen(
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { EcoScanTopBar(title = "Historial de reciclaje") }
+        topBar = { EcoScanTopBar(title = stringResource(R.string.history_title)) }
     ) { paddingValues ->
         when {
             uiState.isLoading -> EcoScanLoading(modifier = Modifier.padding(paddingValues))
 
             uiState.records.isEmpty() -> EcoScanEmptyState(
-                message = uiState.errorMessage ?: "Aún no registraste ningún reciclaje",
+                message = uiState.errorMessage ?: stringResource(R.string.history_empty_message),
                 modifier = Modifier.padding(paddingValues)
             )
 
@@ -73,12 +79,12 @@ private fun HistoryContent(uiState: HistoryUiState, modifier: Modifier = Modifie
         item {
             EcoScanCard {
                 Text(
-                    text = "EcoPuntos acumulados",
+                    text = stringResource(R.string.history_points_label),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "${uiState.totalPoints} pts",
+                    text = stringResource(R.string.history_total_points_format, uiState.totalPoints),
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -89,7 +95,7 @@ private fun HistoryContent(uiState: HistoryUiState, modifier: Modifier = Modifie
             EcoScanCard {
                 Text(text = record.category.toDisplayName(), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = "${record.weightKg} kg · ${record.points} pts",
+                    text = stringResource(R.string.history_record_format, record.weightKg, record.points),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
@@ -102,14 +108,17 @@ private fun HistoryContent(uiState: HistoryUiState, modifier: Modifier = Modifie
     }
 }
 
-private fun WasteCategory.toDisplayName(): String = when (this) {
-    WasteCategory.PLASTIC -> "Plástico"
-    WasteCategory.GLASS -> "Vidrio"
-    WasteCategory.PAPER -> "Papel"
-    WasteCategory.METAL -> "Metal"
-    WasteCategory.ORGANIC -> "Orgánico"
-    WasteCategory.HAZARDOUS -> "Peligroso"
-}
+@Composable
+private fun WasteCategory.toDisplayName(): String = stringResource(
+    when (this) {
+        WasteCategory.PLASTIC -> R.string.waste_category_plastic
+        WasteCategory.GLASS -> R.string.waste_category_glass
+        WasteCategory.PAPER -> R.string.waste_category_paper
+        WasteCategory.METAL -> R.string.waste_category_metal
+        WasteCategory.ORGANIC -> R.string.waste_category_organic
+        WasteCategory.HAZARDOUS -> R.string.waste_category_hazardous
+    }
+)
 
 @PreviewLightDark
 @Composable

@@ -5,6 +5,17 @@ plugins {
     alias(libs.plugins.hilt.android)
 }
 
+// El plugin de Google Services necesita app/google-services.json, que cada persona
+// descarga desde la consola de Firebase y no se versiona (ver .gitignore). Si el archivo
+// no está presente (por ejemplo, un checkout nuevo o CI sin secretos configurados), no
+// aplicamos ni ese plugin ni el de Crashlytics para que el proyecto siga compilando; las
+// dependencias de Firebase igual quedan declaradas más abajo.
+val googleServicesFile = file("google-services.json")
+if (googleServicesFile.exists()) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 android {
     namespace = "pe.ecoscan.app"
     compileSdk {
@@ -68,6 +79,12 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp.core)
     implementation(libs.okhttp.logging.interceptor)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.storage)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
