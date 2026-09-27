@@ -1,3 +1,29 @@
 <resources>
     <string name="app_name">EcoScan</string>
+
+    <string name="nav_label_scan">Escanear</string>
+    <string name="nav_label_map">Mapa</string>
+    <string name="nav_label_history">Historial</string>
+    <string name="nav_label_profile">Perfil</string>
+
+    <string name="content_description_back">Volver</string>
+
+    <string name="scan_title">Escanear</string>
+    <string name="map_title">Mapa</string>
+    <string name="profile_title">Perfil</string>
+    <string name="history_title">Historial de reciclaje</string>
+
+    <string name="placeholder_available_next_sprint">Disponible en el Sprint 3</string>
+
+    <string name="history_empty_message">Aún no registraste ningún reciclaje</string>
+    <string name="history_points_label">EcoPuntos acumulados</string>
+    <string name="history_total_points_format">%1$d pts</string>
+    <string name="history_record_format">%1$s kg · %2$d pts</string>
+
+    <string name="waste_category_plastic">Plástico</string>
+    <string name="waste_category_glass">Vidrio</string>
+    <string name="waste_category_paper">Papel</string>
+    <string name="waste_category_metal">Metal</string>
+    <string name="waste_category_organic">Orgánico</string>
+    <string name="waste_category_hazardous">Peligroso</string>
 </resources>

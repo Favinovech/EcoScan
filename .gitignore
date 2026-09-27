@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Cada persona lo descarga desde la consola de Firebase; nunca se versiona.
+/app/google-services.json
