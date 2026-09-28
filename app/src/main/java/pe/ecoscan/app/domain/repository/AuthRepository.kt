@@ -11,4 +11,4 @@ interface AuthRepository {
     suspend fun sendPasswordResetEmail(email: String): Result<Unit>
     suspend fun signOut()
 }
-//Este es el AuthRepository
+//Este es el AuthRepository del repository
