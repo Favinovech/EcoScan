@@ -9,7 +9,6 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
-// Une la barra inferior con el NavHost; la ruta actual se observa del back stack.
 @Composable
 fun EcoScanApp() {
     val navController = rememberNavController()
@@ -18,18 +17,20 @@ fun EcoScanApp() {
 
     Scaffold(
         bottomBar = {
-            EcoScanBottomBar(
-                currentRoute = currentRoute,
-                onDestinationSelected = { destination ->
-                    navController.navigate(destination.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+            if (currentRoute != "login") {
+                EcoScanBottomBar(
+                    currentRoute = currentRoute,
+                    onDestinationSelected = { destination ->
+                        navController.navigate(destination.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
-                }
-            )
+                )
+            }
         }
     ) { paddingValues ->
         EcoScanNavHost(

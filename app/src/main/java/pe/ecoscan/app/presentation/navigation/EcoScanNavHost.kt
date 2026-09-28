@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import pe.ecoscan.app.presentation.auth.LoginRoute
 import pe.ecoscan.app.presentation.history.HistoryRoute
 import pe.ecoscan.app.presentation.map.MapRoute
 import pe.ecoscan.app.presentation.profile.ProfileRoute
@@ -17,9 +18,18 @@ fun EcoScanNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = EcoScanDestination.Scan.route,
+        startDestination = "login",
         modifier = modifier
     ) {
+        composable("login") {
+            LoginRoute(
+                onLoginSuccess = {
+                    navController.navigate(EcoScanDestination.Scan.route) {
+                        popUpTo("login") { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(EcoScanDestination.Scan.route) { ScanRoute() }
         composable(EcoScanDestination.Map.route) { MapRoute() }
         composable(EcoScanDestination.History.route) { HistoryRoute() }
