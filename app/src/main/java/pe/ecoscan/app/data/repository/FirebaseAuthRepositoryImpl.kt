@@ -1,6 +1,9 @@
 package pe.ecoscan.app.data.repository
 
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -65,6 +68,36 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
 
     override suspend fun signOut() {
         firebaseAuth.signOut()
+    }
+
+    override suspend fun reauthenticate(password: String): Result<Unit> {
+        val user = firebaseAuth.currentUser
+            ?: return Result.failure(IllegalStateException("No hay una sesión activa"))
+        val email = user.email
+        if (email.isNullOrBlank()) {
+            return Result.failure(IllegalStateException("La cuenta no tiene un correo asociado"))
+        }
+        return try {
+            user.reauthenticate(EmailAuthProvider.getCredential(email, password)).await()
+            Result.success(Unit)
+        } catch (e: FirebaseAuthInvalidCredentialsException) {
+            Result.failure(Exception("Contraseña incorrecta"))
+        } catch (e: FirebaseNetworkException) {
+            Result.failure(Exception("Sin conexión a internet"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteAccount(): Result<Unit> {
+        val user = firebaseAuth.currentUser
+            ?: return Result.failure(IllegalStateException("No hay una sesión activa"))
+        return try {
+            user.delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     private fun FirebaseUser.toDomainUser(): User {

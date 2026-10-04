@@ -33,6 +33,14 @@ fun EcoScanNavHost(
         composable(EcoScanDestination.Scan.route) { ScanRoute() }
         composable(EcoScanDestination.Map.route) { MapRoute() }
         composable(EcoScanDestination.History.route) { HistoryRoute() }
-        composable(EcoScanDestination.Profile.route) { ProfileRoute() }
+        composable(EcoScanDestination.Profile.route) {
+            ProfileRoute(
+                onSignedOut = {
+                    navController.navigate("login") {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
+                }
+            )
+        }
     }
 }
