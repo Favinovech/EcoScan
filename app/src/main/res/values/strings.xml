@@ -26,4 +26,30 @@
     <string name="waste_category_metal">Metal</string>
     <string name="waste_category_organic">Orgánico</string>
     <string name="waste_category_hazardous">Peligroso</string>
+
+    <string name="action_cancel">Cancelar</string>
+
+    <string name="profile_photo_description">Foto de perfil</string>
+    <string name="profile_change_photo">Cambiar foto</string>
+    <string name="profile_pending_sync">Cambios pendientes de sincronizar</string>
+    <string name="profile_section_personal">Datos personales</string>
+    <string name="profile_name_label">Nombre</string>
+    <string name="profile_district_label">Distrito</string>
+    <string name="profile_section_preferences">Preferencias</string>
+    <string name="profile_notifications_label">Recibir notificaciones</string>
+    <string name="profile_weekly_goal_format">Meta semanal de reciclaje: %1$d kg</string>
+    <string name="profile_save">Guardar cambios</string>
+    <string name="profile_sign_out">Cerrar sesión</string>
+    <string name="profile_delete_account">Eliminar cuenta</string>
+
+    <string name="profile_photo_dialog_title">Foto de perfil</string>
+    <string name="profile_photo_camera">Tomar foto</string>
+    <string name="profile_photo_gallery">Elegir de la galería</string>
+    <string name="profile_sign_out_dialog_title">¿Cerrar sesión?</string>
+    <string name="profile_sign_out_dialog_message">Tendrás que iniciar sesión de nuevo para volver a usar EcoScan.</string>
+    <string name="profile_delete_dialog_title">¿Eliminar tu cuenta?</string>
+    <string name="profile_delete_dialog_message">Se borrarán tu perfil y tu foto de forma permanente. Esta acción no se puede deshacer. Ingresa tu contraseña para confirmar.</string>
+    <string name="profile_delete_password_label">Contraseña</string>
+    <string name="profile_delete_confirm">Eliminar</string>
+    <string name="default_web_client_id">867304168095-j96l9hvqbc1t7rl5dktbrg76hi0v3d2q.apps.googleusercontent.com</string>
 </resources>

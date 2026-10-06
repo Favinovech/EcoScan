@@ -15,3 +15,5 @@
 local.properties
 
 # Cada persona lo descarga desde la consola de Firebase; nunca se versiona.
+
+.idea/misc.xml

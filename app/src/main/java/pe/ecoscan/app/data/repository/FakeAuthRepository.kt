@@ -55,4 +55,34 @@ class FakeAuthRepository @Inject constructor() : AuthRepository {
     override suspend fun signOut() {
         _currentUser.value = null
     }
+
+    override suspend fun reauthenticate(password: String): Result<Unit> {
+        delay(500)
+        return if (password.isBlank()) {
+            Result.failure(IllegalArgumentException("Ingresa tu contraseña"))
+        } else {
+            Result.success(Unit)
+        }
+    }
+
+    override suspend fun deleteAccount(): Result<Unit> {
+        delay(500)
+        _currentUser.value = null
+        return Result.success(Unit)
+    }
+
+    override suspend fun signInWithGoogle(idToken: String): Result<User> {
+        delay(1200)
+        return if (idToken.isBlank()) {
+            Result.failure(IllegalArgumentException("El token de Google no puede estar vacío"))
+        } else {
+            val user = User(
+                uid = "google-user-123",
+                email = "usuario.google@ecoscan.pe",
+                isEmailVerified = true
+            )
+            _currentUser.value = user
+            Result.success(user)
+        }
+    }
 }
