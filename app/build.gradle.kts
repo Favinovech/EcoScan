@@ -111,4 +111,7 @@ dependencies {
     // TensorFlow Lite
     implementation(libs.tensorflow.lite)
     //implementation(libs.tensorflow.lite.support)
+
+    // ML Kit - lectura de códigos de barras
+    implementation(libs.mlkit.barcode.scanning)
 }

@@ -330,6 +330,27 @@ private fun ScanResultContent(
                 )
             }
 
+            uiState.detectedBarcode?.let { barcode ->
+                EcoScanCard {
+                    Text(
+                        text = "Código de barras detectado",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        text = barcode,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                    EcoScanButton(
+                        text = "Consultar producto",
+                        onClick = { /* Pendiente: consulta a Open Food Facts en la parte 3 de la HU05 */ },
+                        variant = EcoScanButtonVariant.TONAL,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
             EcoScanCard {
                 Text(
                     text = "¿No coincide? Corrige la categoría:",
