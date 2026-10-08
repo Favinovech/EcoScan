@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "867304168095-jfmu2h9iktkkhs04mtpppfsvdmp5ihuj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "pe.ecoscan.app",
+            "certificate_hash": "b4d89874ac301b7c87ace276ae655c3103c76bf1"
+          }
+        },
+        {
           "client_id": "867304168095-pot32tl0r9t6s4nmv62eareneiim3h91.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
