@@ -72,6 +72,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun ScanRoute(
+    onNavigateToProduct: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ScanViewModel = hiltViewModel()
 ) {
@@ -103,6 +104,7 @@ fun ScanRoute(
         onCategorySelect = viewModel::onCategoryCorrected,
         onSaveHistory = viewModel::saveToHistory,
         onReset = viewModel::resetScan,
+        onConsultarProducto = onNavigateToProduct,
         modifier = modifier
     )
 }
@@ -116,6 +118,7 @@ fun ScanScreen(
     onCategorySelect: (WasteCategory) -> Unit,
     onSaveHistory: () -> Unit,
     onReset: () -> Unit,
+    onConsultarProducto: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -142,7 +145,8 @@ fun ScanScreen(
                         uiState = uiState,
                         onCategorySelect = onCategorySelect,
                         onSaveHistory = onSaveHistory,
-                        onReset = onReset
+                        onReset = onReset,
+                        onConsultarProducto = onConsultarProducto
                     )
                 }
 
@@ -259,7 +263,8 @@ private fun ScanResultContent(
     uiState: ScanUiState,
     onCategorySelect: (WasteCategory) -> Unit,
     onSaveHistory: () -> Unit,
-    onReset: () -> Unit
+    onReset: () -> Unit,
+    onConsultarProducto: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -344,7 +349,7 @@ private fun ScanResultContent(
                     )
                     EcoScanButton(
                         text = "Consultar producto",
-                        onClick = { /* Pendiente: consulta a Open Food Facts en la parte 3 de la HU05 */ },
+                        onClick = { onConsultarProducto(barcode) },
                         variant = EcoScanButtonVariant.TONAL,
                         modifier = Modifier.fillMaxWidth()
                     )

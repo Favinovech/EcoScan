@@ -79,4 +79,15 @@ object PackagingMaterialMapper {
             disposalHint = hints.joinToString(" ")
         )
     }
+
+    // Permite a la UI pintar cada material con el color de su categoría. Un material
+    // compuesto como Tetrapak no tiene una sola categoría: devuelve null (indicación neutra).
+    fun categoryFor(material: String): WasteCategory? =
+        CATEGORY_LABELS.entries.firstOrNull { it.value == material }?.key
+
+    // Instrucción de separación específica para un material ya reconocido por resolve().
+    fun hintFor(material: String): String? = when {
+        material == TETRAPACK_LABEL -> TETRAPACK_HINT
+        else -> categoryFor(material)?.let { CATEGORY_HINTS[it] }
+    }
 }
