@@ -9,8 +9,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import pe.ecoscan.app.core.common.DefaultDispatcherProvider
 import pe.ecoscan.app.core.common.DispatcherProvider
 import pe.ecoscan.app.data.repository.WasteRecordRepositoryImpl
+import pe.ecoscan.app.data.scanner.BarcodeDetector
 import pe.ecoscan.app.domain.model.WasteCategory
 import pe.ecoscan.app.domain.model.WasteDisposalInfo
 import pe.ecoscan.app.domain.model.WasteRecord
@@ -21,7 +23,8 @@ import javax.inject.Inject
 class ScanViewModel @Inject constructor(
     private val classifyWasteUseCase: ClassifyWasteUseCase,
     private val wasteRecordRepository: WasteRecordRepositoryImpl,
-    private val dispatcherProvider: DispatcherProvider
+    private val dispatcherProvider: DispatcherProvider,
+    private val barcodeDetector: BarcodeDetector = BarcodeDetector(DefaultDispatcherProvider())
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ScanUiState())
@@ -37,7 +40,8 @@ class ScanViewModel @Inject constructor(
                 it.copy(
                     isAnalyzing = true,
                     capturedBitmap = bitmap,
-                    errorMessage = null
+                    errorMessage = null,
+                    detectedBarcode = null
                 )
             }
             val result = classifyWasteUseCase(bitmap)
@@ -55,6 +59,12 @@ class ScanViewModel @Inject constructor(
                         isAnalyzing = false,
                         errorMessage = error.localizedMessage ?: "Error al clasificar residuo"
                     )
+                }
+            }
+
+            barcodeDetector.detect(bitmap).onSuccess { barcode ->
+                if (barcode != null) {
+                    _uiState.update { it.copy(detectedBarcode = barcode) }
                 }
             }
         }
@@ -105,7 +115,8 @@ class ScanViewModel @Inject constructor(
                 classification = null,
                 selectedCategory = null,
                 isSavedSuccess = false,
-                errorMessage = null
+                errorMessage = null,
+                detectedBarcode = null
             )
         }
     }

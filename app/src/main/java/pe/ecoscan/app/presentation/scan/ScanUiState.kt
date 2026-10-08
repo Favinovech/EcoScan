@@ -13,5 +13,6 @@ data class ScanUiState(
     val estimatedWeightKg: Double = 0.5,
     val isSavedSuccess: Boolean = false,
     val errorMessage: String? = null,
-    val hasCameraPermission: Boolean = false
+    val hasCameraPermission: Boolean = false,
+    val detectedBarcode: String? = null
 )

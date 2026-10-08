@@ -72,6 +72,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun ScanRoute(
+    onNavigateToProduct: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ScanViewModel = hiltViewModel()
 ) {
@@ -103,6 +104,7 @@ fun ScanRoute(
         onCategorySelect = viewModel::onCategoryCorrected,
         onSaveHistory = viewModel::saveToHistory,
         onReset = viewModel::resetScan,
+        onConsultarProducto = onNavigateToProduct,
         modifier = modifier
     )
 }
@@ -116,6 +118,7 @@ fun ScanScreen(
     onCategorySelect: (WasteCategory) -> Unit,
     onSaveHistory: () -> Unit,
     onReset: () -> Unit,
+    onConsultarProducto: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -142,7 +145,8 @@ fun ScanScreen(
                         uiState = uiState,
                         onCategorySelect = onCategorySelect,
                         onSaveHistory = onSaveHistory,
-                        onReset = onReset
+                        onReset = onReset,
+                        onConsultarProducto = onConsultarProducto
                     )
                 }
 
@@ -259,7 +263,8 @@ private fun ScanResultContent(
     uiState: ScanUiState,
     onCategorySelect: (WasteCategory) -> Unit,
     onSaveHistory: () -> Unit,
-    onReset: () -> Unit
+    onReset: () -> Unit,
+    onConsultarProducto: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -328,6 +333,27 @@ private fun ScanResultContent(
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 4.dp)
                 )
+            }
+
+            uiState.detectedBarcode?.let { barcode ->
+                EcoScanCard {
+                    Text(
+                        text = "Código de barras detectado",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        text = barcode,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                    EcoScanButton(
+                        text = "Consultar producto",
+                        onClick = { onConsultarProducto(barcode) },
+                        variant = EcoScanButtonVariant.TONAL,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
             EcoScanCard {
