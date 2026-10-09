@@ -1,12 +1,23 @@
 package pe.ecoscan.app.presentation.auth
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -19,18 +30,28 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
+import pe.ecoscan.app.R
 import pe.ecoscan.app.core.designsystem.component.EcoScanButton
 import pe.ecoscan.app.core.designsystem.component.EcoScanButtonVariant
 import pe.ecoscan.app.core.designsystem.component.EcoScanTopBar
 
-@Suppress("DEPRECATION")
 @Composable
 fun LoginRoute(
     onLoginSuccess: () -> Unit,
@@ -39,6 +60,10 @@ fun LoginRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val credentialManager = remember { CredentialManager.create(context) }
+    val webClientId = stringResource(R.string.default_web_client_id)
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -57,11 +82,45 @@ fun LoginRoute(
         }
     }
 
+    val onGoogleSignInClick: () -> Unit = {
+        coroutineScope.launch {
+            try {
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(webClientId)
+                    .setAutoSelectEnabled(false)
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val result = credentialManager.getCredential(
+                    request = request,
+                    context = context
+                )
+
+                val credential = result.credential
+                if (credential is CustomCredential &&
+                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                ) {
+                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    viewModel.signInWithGoogle(googleIdTokenCredential.idToken)
+                }
+            } catch (e: GetCredentialCancellationException) {
+                // El usuario canceló la selección de cuenta
+            } catch (e: Exception) {
+                snackbarHostState.showSnackbar("Error al conectar con Google: ${e.localizedMessage}")
+            }
+        }
+    }
+
     LoginScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
         onSignIn = viewModel::signIn,
         onSignUp = viewModel::signUp,
+        onGoogleSignIn = onGoogleSignInClick,
         onForgotPassword = viewModel::sendPasswordReset,
         modifier = modifier
     )
@@ -73,12 +132,14 @@ fun LoginScreen(
     snackbarHostState: SnackbarHostState,
     onSignIn: (String, String) -> Unit,
     onSignUp: (String, String) -> Unit,
+    onGoogleSignIn: () -> Unit,
     onForgotPassword: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isRegisterMode by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isPasswordVisible by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier,
@@ -97,18 +158,24 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "EcoScan",
-                style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.primary
+            Image(
+                painter = painterResource(id = R.drawable.ic_ecoscan_brand),
+                contentDescription = "EcoScan",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(130.dp),
+                contentScale = ContentScale.Fit
             )
+
+            Spacer(modifier = Modifier.height(16.dp)) //
+
             Text(
                 text = if (isRegisterMode) "Crea una cuenta para comenzar a reciclar" else "Ingresa para gestionar tus EcoPuntos",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 value = email,
@@ -125,7 +192,27 @@ fun LoginScreen(
                 onValueChange = { password = it },
                 label = { Text("Contraseña") },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (isPasswordVisible) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
+                trailingIcon = {
+                    IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                        Icon(
+                            imageVector = if (isPasswordVisible) {
+                                Icons.Filled.VisibilityOff
+                            } else {
+                                Icons.Filled.Visibility
+                            },
+                            contentDescription = if (isPasswordVisible) {
+                                "Ocultar contraseña"
+                            } else {
+                                "Mostrar contraseña"
+                            }
+                        )
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -140,6 +227,30 @@ fun LoginScreen(
                         onSignIn(email, password)
                     }
                 },
+                isLoading = uiState.isLoading,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                HorizontalDivider(modifier = Modifier.weight(1f))
+                Text(
+                    text = "  o  ",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+                HorizontalDivider(modifier = Modifier.weight(1f))
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Botón oficial de Google con logo y estilo Material
+            GoogleSignInButton(
+                onClick = onGoogleSignIn,
                 isLoading = uiState.isLoading,
                 modifier = Modifier.fillMaxWidth()
             )

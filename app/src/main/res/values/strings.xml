@@ -51,4 +51,5 @@
     <string name="profile_delete_dialog_message">Se borrarán tu perfil y tu foto de forma permanente. Esta acción no se puede deshacer. Ingresa tu contraseña para confirmar.</string>
     <string name="profile_delete_password_label">Contraseña</string>
     <string name="profile_delete_confirm">Eliminar</string>
+    <string name="default_web_client_id">867304168095-j96l9hvqbc1t7rl5dktbrg76hi0v3d2q.apps.googleusercontent.com</string>
 </resources>

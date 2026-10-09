@@ -13,7 +13,7 @@ import pe.ecoscan.app.domain.model.User
 import pe.ecoscan.app.domain.repository.AuthRepository
 import javax.inject.Inject
 import javax.inject.Singleton
-
+import com.google.firebase.auth.GoogleAuthProvider
 @Singleton
 class FirebaseAuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth
@@ -95,6 +95,21 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
         return try {
             user.delete().await()
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun signInWithGoogle(idToken: String): Result<User> {
+        return try {
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            val authResult = firebaseAuth.signInWithCredential(credential).await()
+            val firebaseUser = authResult.user
+            if (firebaseUser != null) {
+                Result.success(firebaseUser.toDomainUser())
+            } else {
+                Result.failure(Exception("Error al autenticar con Google en Firebase"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

@@ -57,6 +57,23 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun signInWithGoogle(idToken: String) {
+        viewModelScope.launch(dispatcherProvider.main) {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, infoMessage = null) }
+            val result = authRepository.signInWithGoogle(idToken)
+            result.onSuccess { user ->
+                _uiState.update { it.copy(isLoading = false, user = user, isSuccess = true) }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = error.localizedMessage ?: "Error al iniciar sesión con Google"
+                    )
+                }
+            }
+        }
+    }
+
     fun clearMessages() {
         _uiState.update { it.copy(errorMessage = null, infoMessage = null) }
     }

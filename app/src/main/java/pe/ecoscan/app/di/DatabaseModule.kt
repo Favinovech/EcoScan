@@ -15,6 +15,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import pe.ecoscan.app.data.local.EcoScanDatabase
 import pe.ecoscan.app.data.local.MIGRATION_1_2
+import pe.ecoscan.app.data.local.MIGRATION_2_3
+import pe.ecoscan.app.data.local.dao.CachedProductDao
 import pe.ecoscan.app.data.local.dao.UserProfileDao
 import pe.ecoscan.app.data.local.dao.WasteRecordDao
 import pe.ecoscan.app.data.local.entity.WasteRecordEntity
@@ -66,7 +68,7 @@ object DatabaseModule {
         @ApplicationContext context: Context,
         databaseProvider: Provider<EcoScanDatabase>
     ): EcoScanDatabase = Room.databaseBuilder(context, EcoScanDatabase::class.java, DATABASE_NAME)
-        .addMigrations(MIGRATION_1_2)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
         .addCallback(EcoScanDatabaseCallback(databaseProvider))
         .build()
 
@@ -75,4 +77,7 @@ object DatabaseModule {
 
     @Provides
     fun provideUserProfileDao(database: EcoScanDatabase): UserProfileDao = database.userProfileDao()
+
+    @Provides
+    fun provideCachedProductDao(database: EcoScanDatabase): CachedProductDao = database.cachedProductDao()
 }

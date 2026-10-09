@@ -2,12 +2,20 @@ package pe.ecoscan.app.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
 
-// Plantilla de DTO para el Sprint 3, cuando se consulte Open Food Facts por código de barras.
+// Datos del producto dentro de la respuesta de Open Food Facts. Todos los campos son
+// opcionales: Open Food Facts puede omitir cualquiera según qué tan completa esté la
+// ficha del producto.
 data class ProductDto(
-    @SerializedName("code")
-    val code: String,
     @SerializedName("product_name")
-    val productName: String?,
+    val productName: String? = null,
+    @SerializedName("brands")
+    val brands: String? = null,
     @SerializedName("packaging")
-    val packaging: String?
+    val packaging: String? = null,
+    @SerializedName("packaging_tags")
+    val packagingTags: List<String>? = null,
+    @SerializedName("categories_tags")
+    val categoriesTags: List<String>? = null,
+    @SerializedName("image_front_small_url")
+    val imageFrontSmallUrl: String? = null
 )
