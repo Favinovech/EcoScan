@@ -168,18 +168,29 @@ private fun CameraPreviewView(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val imageCapture = remember { ImageCapture.Builder().build() }
+    val imageCapture = remember {
+        ImageCapture.Builder()
+            .setTargetAspectRatio(androidx.camera.core.AspectRatio.RATIO_4_3)
+            .build()
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
             factory = { ctx ->
-                val previewView = PreviewView(ctx)
+                val previewView = PreviewView(ctx).apply {
+                    // En API 34 PERFORMANCE gestiona el viewport sin desfasar la textura
+                    implementationMode = PreviewView.ImplementationMode.PERFORMANCE
+                    scaleType = PreviewView.ScaleType.FILL_CENTER
+                }
                 val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
                 cameraProviderFuture.addListener({
                     val cameraProvider = cameraProviderFuture.get()
-                    val preview = Preview.Builder().build().also {
-                        it.surfaceProvider = previewView.surfaceProvider
-                    }
+                    val preview = Preview.Builder()
+                        .setTargetAspectRatio(androidx.camera.core.AspectRatio.RATIO_4_3)
+                        .build()
+                        .also {
+                            it.surfaceProvider = previewView.surfaceProvider
+                        }
                     val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
                     try {
                         cameraProvider.unbindAll()
@@ -227,7 +238,6 @@ private fun CameraPreviewView(
         }
     }
 }
-
 private fun takePhoto(
     context: Context,
     imageCapture: ImageCapture,
@@ -277,15 +287,21 @@ private fun ScanResultContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         uiState.capturedBitmap?.let { bitmap ->
-            Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Foto capturada",
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
-                    .clip(MaterialTheme.shapes.medium),
-                contentScale = ContentScale.Crop
-            )
+                    .height(240.dp)
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Foto capturada",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
+                )
+            }
         }
 
         uiState.classification?.let { info ->
