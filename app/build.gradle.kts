@@ -47,6 +47,11 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // BORRAR ESTO DE AQUÍ:
+    androidResources {
+        noCompress += "tflite"
+    }
 }
 
 ksp {
@@ -110,8 +115,8 @@ dependencies {
 
     // TensorFlow Lite
     implementation(libs.tensorflow.lite)
-    //implementation(libs.tensorflow.lite.support)
 
     // ML Kit - lectura de códigos de barras
     implementation(libs.mlkit.barcode.scanning)
 }
+
