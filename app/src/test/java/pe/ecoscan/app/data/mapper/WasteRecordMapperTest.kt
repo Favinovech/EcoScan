@@ -2,6 +2,7 @@ package pe.ecoscan.app.data.mapper
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import pe.ecoscan.app.data.local.entity.WasteRecordEntity
 import pe.ecoscan.app.domain.model.WasteCategory
@@ -27,6 +28,7 @@ class WasteRecordMapperTest {
         assertEquals(5.0, domain.weightKg, 0.0)
         assertEquals(30, domain.points)
         assertEquals(123456L, domain.recordedAt)
+        assertTrue(domain.isSynced)
     }
 
     @Test

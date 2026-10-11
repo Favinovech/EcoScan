@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "867304168095-3tlgqakoktnqn843ahb046ac8tmrql8u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "pe.ecoscan.app",
+            "certificate_hash": "b5a1526de5e21f1428937bbe9d27ff8729490687"
+          }
+        },
+        {
+          "client_id": "867304168095-fpel96cdb9e7mo28htn6qqrik5oc7hf0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "pe.ecoscan.app",
+            "certificate_hash": "ef710396cf269abaff0c8e4b22e975813040dff3"
+          }
+        },
+        {
           "client_id": "867304168095-jfmu2h9iktkkhs04mtpppfsvdmp5ihuj.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
