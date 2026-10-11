@@ -13,7 +13,7 @@ import pe.ecoscan.app.data.local.entity.WasteRecordEntity
 
 @Database(
     entities = [WasteRecordEntity::class, UserProfileEntity::class, CachedProductEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(WasteCategoryConverter::class)

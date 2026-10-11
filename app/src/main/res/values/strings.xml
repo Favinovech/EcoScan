@@ -52,4 +52,26 @@
     <string name="profile_delete_password_label">Contraseña</string>
     <string name="profile_delete_confirm">Eliminar</string>
     <string name="default_web_client_id">867304168095-j96l9hvqbc1t7rl5dktbrg76hi0v3d2q.apps.googleusercontent.com</string>
+
+    <string name="history_filter_category_label">Categoría</string>
+    <string name="history_filter_all_categories">Todas</string>
+    <string name="history_filter_date_label">Fecha</string>
+    <string name="history_date_all">Todo</string>
+    <string name="history_date_7_days">7 días</string>
+    <string name="history_date_30_days">30 días</string>
+    <string name="history_date_custom">Rango</string>
+    <string name="history_date_apply">Aplicar</string>
+    <string name="history_clear_filters">Limpiar filtros</string>
+    <string name="history_results_format">Mostrando %1$d de %2$d registros · %3$s kg</string>
+    <string name="history_no_results">No hay registros con estos filtros</string>
+    <string name="history_pending_sync">Pendiente de sincronizar</string>
+    <string name="history_edit_action">Editar registro</string>
+    <string name="history_delete_action">Eliminar registro</string>
+    <string name="history_edit_title">Editar registro</string>
+    <string name="history_edit_category_label">Categoría</string>
+    <string name="history_edit_weight_label">Peso estimado (kg)</string>
+    <string name="history_edit_save">Guardar</string>
+    <string name="history_delete_title">¿Eliminar registro?</string>
+    <string name="history_delete_message_format">Se eliminará el registro de %1$s del %2$s (%3$s kg). Esta acción no se puede deshacer.</string>
+    <string name="history_delete_confirm">Eliminar</string>
 </resources>
