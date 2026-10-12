@@ -10,4 +10,4 @@ enum class DatePreset {
 
 // Rango de fechas en epoch millis locales, ambos extremos inclusivos.
 data class DateRange(val fromMillis: Long, val toMillis: Long)
-//Arreglo de DatePreset
+//Arreglo de DatePreset.kt
