@@ -11,6 +11,8 @@ import pe.ecoscan.app.data.local.EcoScanDatabase
 import pe.ecoscan.app.data.local.MIGRATION_1_2
 import pe.ecoscan.app.data.local.MIGRATION_2_3
 import pe.ecoscan.app.data.local.MIGRATION_3_4
+import pe.ecoscan.app.data.local.MIGRATION_4_5
+import pe.ecoscan.app.data.local.dao.CachedCollectionPointDao
 import pe.ecoscan.app.data.local.dao.CachedProductDao
 import pe.ecoscan.app.data.local.dao.UserProfileDao
 import pe.ecoscan.app.data.local.dao.WasteRecordDao
@@ -27,7 +29,7 @@ object DatabaseModule {
     fun provideEcoScanDatabase(
         @ApplicationContext context: Context
     ): EcoScanDatabase = Room.databaseBuilder(context, EcoScanDatabase::class.java, DATABASE_NAME)
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
         .build()
 
     @Provides
@@ -38,4 +40,8 @@ object DatabaseModule {
 
     @Provides
     fun provideCachedProductDao(database: EcoScanDatabase): CachedProductDao = database.cachedProductDao()
+
+    @Provides
+    fun provideCachedCollectionPointDao(database: EcoScanDatabase): CachedCollectionPointDao =
+        database.cachedCollectionPointDao()
 }

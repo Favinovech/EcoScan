@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -16,6 +18,15 @@ if (googleServicesFile.exists()) {
     apply(plugin = "com.google.firebase.crashlytics")
 }
 
+// Clave de Google Maps (HU07). Cada persona la define en local.properties (no se versiona):
+//   MAPS_API_KEY=AIza...
+// Sin clave la app compila, pero el mapa se ve en blanco.
+val mapsApiKey: String = Properties().let { properties ->
+    val localProperties = rootProject.file("local.properties")
+    if (localProperties.exists()) localProperties.inputStream().use { properties.load(it) }
+    properties.getProperty("MAPS_API_KEY", "")
+}
+
 android {
     namespace = "pe.ecoscan.app"
     compileSdk {
@@ -30,6 +41,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
@@ -118,5 +130,9 @@ dependencies {
 
     // ML Kit - lectura de códigos de barras
     implementation(libs.mlkit.barcode.scanning)
+
+    // Mapa y ubicación (HU07)
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.location)
 }
 

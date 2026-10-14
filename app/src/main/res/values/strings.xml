@@ -74,4 +74,27 @@
     <string name="history_delete_title">¿Eliminar registro?</string>
     <string name="history_delete_message_format">Se eliminará el registro de %1$s del %2$s (%3$s kg). Esta acción no se puede deshacer.</string>
     <string name="history_delete_confirm">Eliminar</string>
+
+    <string name="map_permission_message">Para mostrarte los puntos de acopio cercanos necesitamos acceder a tu ubicación.</string>
+    <string name="map_permission_action">Permitir ubicación</string>
+    <string name="map_open_settings">Abrir ajustes de la app</string>
+    <string name="map_retry">Reintentar</string>
+    <string name="map_refresh">Actualizar puntos</string>
+    <string name="map_my_location">Mi ubicación</string>
+    <string name="map_filter_all_materials">Todos</string>
+    <string name="map_filter_distance_format">%1$d km</string>
+    <string name="map_offline_data">Sin conexión: mostrando los últimos puntos guardados</string>
+    <string name="map_no_points">No hay puntos de acopio con estos filtros</string>
+    <string name="map_point_unnamed">Punto de acopio</string>
+    <string name="map_point_distance_format">A %1$s de ti</string>
+    <string name="map_point_address_label">Dirección</string>
+    <string name="map_point_address_unknown">Dirección no disponible</string>
+    <string name="map_point_hours_label">Horario</string>
+    <string name="map_point_hours_unknown">Horario no disponible</string>
+    <string name="map_point_materials_label">Materiales que recibe</string>
+    <string name="map_point_materials_unknown">No especificados</string>
+    <string name="map_directions">Cómo llegar</string>
+    <string name="map_close_details">Cerrar</string>
+    <string name="map_settings_unavailable">No se pudieron abrir los ajustes</string>
+    <string name="map_no_maps_app">No hay ninguna app de mapas instalada</string>
 </resources>
