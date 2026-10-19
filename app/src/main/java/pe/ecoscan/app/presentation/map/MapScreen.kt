@@ -15,15 +15,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddLocationAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -80,15 +84,11 @@ import pe.ecoscan.app.presentation.history.toDisplayName
 private const val DEFAULT_ZOOM = 14f
 private const val GOOGLE_MAPS_PACKAGE = "com.google.android.apps.maps"
 
-// Punto de entrada con Hilt. Aquí viven el permiso de ubicación y la apertura de Google Maps;
-// MapScreen queda sin dependencias de Android para poder previsualizarla.
-// hiltViewModel() de androidx.hilt.navigation.compose está deprecado a favor de
-// androidx.hilt.lifecycle.viewmodel.compose, pero ese artefacto sigue en alpha/beta;
-// nos quedamos en la versión estable hasta que haya un release estable.
 @Suppress("DEPRECATION")
 @Composable
 fun MapRoute(
     modifier: Modifier = Modifier,
+    onNavigateToReport: () -> Unit = {},
     viewModel: MapViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -106,12 +106,10 @@ fun MapRoute(
         )
     }
 
-    // Al abrir la pestaña se pide el permiso si aún no está concedido.
     LaunchedEffect(Unit) {
         if (!context.hasLocationPermission()) requestPermission()
     }
 
-    // Al volver a la pantalla (por ejemplo, desde Ajustes) se vuelve a comprobar el permiso.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.onPermissionResult(context.hasLocationPermission())
     }
@@ -133,6 +131,7 @@ fun MapRoute(
         onMaxDistanceSelected = viewModel::onMaxDistanceSelected,
         onPointSelected = viewModel::onPointSelected,
         onDirectionsClick = { point -> context.openDirections(point) },
+        onNavigateToReport = onNavigateToReport,
         modifier = modifier
     )
 }
@@ -148,7 +147,8 @@ fun MapScreen(
     onMaterialSelected: (WasteCategory?) -> Unit = {},
     onMaxDistanceSelected: (Int) -> Unit = {},
     onPointSelected: (CollectionPoint?) -> Unit = {},
-    onDirectionsClick: (CollectionPoint) -> Unit = {}
+    onDirectionsClick: (CollectionPoint) -> Unit = {},
+    onNavigateToReport: () -> Unit = {}
 ) {
     Scaffold(
         modifier = modifier,
@@ -185,6 +185,7 @@ fun MapScreen(
                 onPointSelected = onPointSelected,
                 onRefresh = onRetry,
                 onDirectionsClick = onDirectionsClick,
+                onNavigateToReport = onNavigateToReport,
                 modifier = contentModifier
             )
         }
@@ -207,8 +208,6 @@ private fun PermissionRequired(
             actionLabel = stringResource(R.string.map_permission_action),
             onAction = onRequestPermission
         )
-        // Si el usuario negó el permiso dos veces, Android ya no muestra el diálogo:
-        // la única salida es activarlo desde los ajustes de la app.
         TextButton(onClick = onOpenSettings) {
             Text(stringResource(R.string.map_open_settings))
         }
@@ -224,12 +223,12 @@ private fun MapContent(
     onPointSelected: (CollectionPoint?) -> Unit,
     onRefresh: () -> Unit,
     onDirectionsClick: (CollectionPoint) -> Unit,
+    onNavigateToReport: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val cameraPositionState = rememberCameraPositionState()
     val scope = rememberCoroutineScope()
 
-    // Centra el mapa en el usuario cada vez que se obtiene una ubicación nueva.
     LaunchedEffect(userLocation) {
         cameraPositionState.position = CameraPosition.fromLatLngZoom(
             LatLng(userLocation.latitude, userLocation.longitude),
@@ -237,7 +236,6 @@ private fun MapContent(
         )
     }
 
-    // Al tocar un punto, la cámara se desplaza hasta él.
     LaunchedEffect(uiState.selectedPoint?.id) {
         uiState.selectedPoint?.let { point ->
             cameraPositionState.animate(
@@ -274,6 +272,7 @@ private fun MapContent(
             }
         }
 
+        // Barra de filtros superior
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -294,15 +293,27 @@ private fun MapContent(
             }
         }
 
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(12.dp),
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            val selected = uiState.selectedPoint
-            if (selected == null) {
+        val selected = uiState.selectedPoint
+
+        // Banner informativo centrado en el fondo
+        if (selected == null && uiState.visiblePoints.isEmpty() && !uiState.isLoading) {
+            StatusBanner(
+                text = stringResource(R.string.map_no_points),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
+            )
+        }
+
+        // Botones flotantes fijados en la esquina inferior derecha
+        if (selected == null) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 16.dp),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 SmallFloatingActionButton(
                     onClick = {
                         scope.launch {
@@ -320,16 +331,31 @@ private fun MapContent(
                         contentDescription = stringResource(R.string.map_my_location)
                     )
                 }
+
                 FloatingActionButton(onClick = onRefresh) {
                     Icon(
                         imageVector = Icons.Filled.Refresh,
                         contentDescription = stringResource(R.string.map_refresh)
                     )
                 }
-                if (uiState.visiblePoints.isEmpty() && !uiState.isLoading) {
-                    StatusBanner(text = stringResource(R.string.map_no_points))
+
+                ExtendedFloatingActionButton(
+                    onClick = onNavigateToReport,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Icon(imageVector = Icons.Filled.AddLocationAlt, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Reportar punto")
                 }
-            } else {
+            }
+        } else {
+            // Ficha del punto seleccionado cuando se toca un marcador
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+            ) {
                 PointDetailCard(
                     point = selected,
                     onClose = { onPointSelected(null) },
@@ -412,7 +438,6 @@ private fun StatusBanner(text: String, modifier: Modifier = Modifier) {
     }
 }
 
-// Ficha del punto: nombre, distancia, dirección, horario, materiales y "Cómo llegar".
 @Composable
 private fun PointDetailCard(
     point: CollectionPoint,
@@ -493,8 +518,6 @@ private fun Context.openAppSettings() {
     }
 }
 
-// "Cómo llegar": abre la navegación de Google Maps hacia el punto. Si Google Maps no está
-// instalado, abre cualquier app de mapas con la ubicación.
 private fun Context.openDirections(point: CollectionPoint) {
     val lat = point.location.latitude
     val lon = point.location.longitude
