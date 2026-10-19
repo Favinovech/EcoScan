@@ -17,6 +17,8 @@ import pe.ecoscan.app.domain.repository.ProductRepository
 import pe.ecoscan.app.domain.repository.ProfileRepository
 import pe.ecoscan.app.domain.repository.WasteRecordRepository
 import javax.inject.Singleton
+import pe.ecoscan.app.data.repository.CommunityReportRepositoryImpl
+import pe.ecoscan.app.domain.repository.CommunityReportRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -45,4 +47,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCollectionPointRepository(impl: CollectionPointRepositoryImpl): CollectionPointRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCommunityReportRepository(impl: CommunityReportRepositoryImpl): CommunityReportRepository
 }
