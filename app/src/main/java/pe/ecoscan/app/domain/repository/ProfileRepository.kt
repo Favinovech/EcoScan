@@ -19,4 +19,9 @@ interface ProfileRepository {
 
     // Borra el perfil en Firestore, la foto en Storage y la copia local.
     suspend fun deleteProfile(uid: String): Result<Unit>
+
+    // Sube a Firestore un perfil que quedó pendiente (isSynced = false) tras un guardado sin
+    // conexión. No hay nada que subir si no existe perfil local o si ya está sincronizado.
+    // Lo usa el worker de sincronización en segundo plano (HU09).
+    suspend fun syncPendingProfile(uid: String): Result<Unit>
 }

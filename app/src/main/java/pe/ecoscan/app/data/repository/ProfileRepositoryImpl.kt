@@ -15,6 +15,7 @@ import pe.ecoscan.app.data.local.dao.UserProfileDao
 import pe.ecoscan.app.data.mapper.toDomain
 import pe.ecoscan.app.data.mapper.toEntity
 import pe.ecoscan.app.data.mapper.toFirestoreMap
+import pe.ecoscan.app.data.sync.SyncScheduler
 import pe.ecoscan.app.domain.model.User
 import pe.ecoscan.app.domain.model.UserProfile
 import pe.ecoscan.app.domain.repository.ProfileRepository
@@ -34,7 +35,8 @@ class ProfileRepositoryImpl @Inject constructor(
     private val profileDao: UserProfileDao,
     private val firestore: FirebaseFirestore,
     private val storage: FirebaseStorage,
-    private val dispatcherProvider: DispatcherProvider
+    private val dispatcherProvider: DispatcherProvider,
+    private val syncScheduler: SyncScheduler
 ) : ProfileRepository {
 
     override fun observeProfile(uid: String): Flow<UserProfile?> =
@@ -86,15 +88,18 @@ class ProfileRepositoryImpl @Inject constructor(
             return@withContext Result.failure(e)
         }
 
-        // 2) Luego se intenta subir a Firebase. Si falla o no hay red, queda pendiente.
+        // 2) Luego se intenta subir a Firebase. Si falla o no hay red, queda pendiente: se
+        // encola un SyncWorker (HU09) para reintentarlo en segundo plano más adelante.
         try {
             val syncedProfile = withTimeoutOrNull(REMOTE_TIMEOUT_MS) {
                 pushToRemote(profile, newPhotoUri)
             }
+            if (syncedProfile == null) syncScheduler.enqueuePendingSync()
             Result.success(syncedProfile ?: profile.copy(isSynced = false))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            syncScheduler.enqueuePendingSync()
             Result.success(profile.copy(isSynced = false))
         }
     }
@@ -112,6 +117,24 @@ class ProfileRepositoryImpl @Inject constructor(
             .await()
         profileDao.markSynced(profile.uid, photoUrl)
         return synced
+    }
+
+    // HU09: reintenta subir un perfil que quedó pendiente (isSynced = false) sin que el
+    // usuario tenga que volver a abrir la pantalla de perfil y guardar. La foto pendiente (si
+    // la hubo) no se persiste en Room, así que aquí solo se reintentan los datos de texto; si
+    // la foto no se pudo subir sin conexión, el usuario tiene que volver a elegirla y guardar.
+    override suspend fun syncPendingProfile(uid: String): Result<Unit> = withContext(dispatcherProvider.io) {
+        try {
+            val local = profileDao.get(uid) ?: return@withContext Result.success(Unit)
+            if (local.isSynced) return@withContext Result.success(Unit)
+
+            pushToRemote(local.toDomain(), newPhotoUri = null)
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun deleteProfile(uid: String): Result<Unit> = withContext(dispatcherProvider.io) {

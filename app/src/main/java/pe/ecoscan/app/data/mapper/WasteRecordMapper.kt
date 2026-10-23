@@ -9,7 +9,8 @@ fun WasteRecordEntity.toDomain(): WasteRecord = WasteRecord(
     category = category,
     weightKg = weightKg,
     points = points,
-    recordedAt = recordedAt
+    recordedAt = recordedAt,
+    isSynced = isSynced
 )
 
 fun WasteRecord.toEntity(): WasteRecordEntity = WasteRecordEntity(

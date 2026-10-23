@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pe.ecoscan.app.core.common.DispatcherProvider
+import pe.ecoscan.app.data.reminder.ReminderScheduler
 import pe.ecoscan.app.domain.model.User
 import pe.ecoscan.app.domain.model.UserProfile
 import pe.ecoscan.app.domain.repository.AuthRepository
@@ -32,7 +33,8 @@ class ProfileViewModel @Inject constructor(
     private val refreshUserProfileUseCase: RefreshUserProfileUseCase,
     private val saveUserProfileUseCase: SaveUserProfileUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
-    private val dispatcherProvider: DispatcherProvider
+    private val dispatcherProvider: DispatcherProvider,
+    private val reminderScheduler: ReminderScheduler
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -185,6 +187,11 @@ class ProfileViewModel @Inject constructor(
                     }
                 }
         }
+    }
+
+    // Botón "Probar recordatorio" (solo en builds debug, ver ProfileScreen).
+    fun onTestReminderClicked() {
+        reminderScheduler.scheduleTestReminder()
     }
 
     fun clearMessages() {
