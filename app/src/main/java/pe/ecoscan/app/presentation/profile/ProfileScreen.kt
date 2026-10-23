@@ -55,6 +55,7 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import pe.ecoscan.app.BuildConfig
 import pe.ecoscan.app.R
 import pe.ecoscan.app.core.designsystem.component.EcoScanButton
 import pe.ecoscan.app.core.designsystem.component.EcoScanButtonVariant
@@ -141,6 +142,7 @@ fun ProfileRoute(
         onSave = viewModel::saveProfile,
         onSignOut = viewModel::signOut,
         onDeleteAccount = viewModel::deleteAccount,
+        onTestReminder = viewModel::onTestReminderClicked,
         modifier = modifier
     )
 }
@@ -158,6 +160,7 @@ fun ProfileScreen(
     onSave: () -> Unit,
     onSignOut: () -> Unit,
     onDeleteAccount: (String) -> Unit,
+    onTestReminder: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showPhotoDialog by remember { mutableStateOf(false) }
@@ -287,6 +290,16 @@ fun ProfileScreen(
                     variant = EcoScanButtonVariant.TONAL,
                     modifier = Modifier.fillMaxWidth()
                 )
+                // HU09, parte 1: solo en builds debug, para demostrar el recordatorio sin
+                // esperar a la próxima ocurrencia programada. La parte 2 no toca este botón.
+                if (BuildConfig.DEBUG) {
+                    EcoScanButton(
+                        text = stringResource(R.string.profile_test_reminder),
+                        onClick = onTestReminder,
+                        variant = EcoScanButtonVariant.TONAL,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
                 TextButton(
                     onClick = { showDeleteDialog = true },
                     colors = ButtonDefaults.textButtonColors(

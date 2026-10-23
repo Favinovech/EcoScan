@@ -41,6 +41,7 @@
     <string name="profile_save">Guardar cambios</string>
     <string name="profile_sign_out">Cerrar sesión</string>
     <string name="profile_delete_account">Eliminar cuenta</string>
+    <string name="profile_test_reminder">Probar recordatorio (debug)</string>
 
     <string name="profile_photo_dialog_title">Foto de perfil</string>
     <string name="profile_photo_camera">Tomar foto</string>

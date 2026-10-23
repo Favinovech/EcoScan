@@ -60,6 +60,17 @@ android {
         buildConfig = true
     }
 
+    // HU09: FirebaseFirestoreException.Code inicializa un SparseArray de android.util en un
+    // bloque estático; sin esto, las pruebas unitarias (JVM, sin Robolectric) que lo tocan
+    // fallan con "Method get in android.util.SparseArray not mocked", aunque en el dispositivo
+    // real funciona sin problema. No afecta el comportamiento de la app, solo cómo corren los
+    // tests: cualquier llamada a Android sin mockear devuelve un valor por defecto.
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
+
     // BORRAR ESTO DE AQUÍ:
     androidResources {
         noCompress += "tflite"
@@ -134,5 +145,11 @@ dependencies {
     // Mapa y ubicación (HU07)
     implementation(libs.maps.compose)
     implementation(libs.play.services.location)
+
+    // WorkManager (HU09): recordatorios y sincronización en segundo plano
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+    androidTestImplementation(libs.androidx.work.testing)
 }
 
