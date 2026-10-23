@@ -9,6 +9,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import pe.ecoscan.app.BuildConfig
 import pe.ecoscan.app.data.remote.api.EcoScanApi
+import pe.ecoscan.app.data.remote.api.OverpassApi
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -61,4 +62,10 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideEcoScanApi(retrofit: Retrofit): EcoScanApi = retrofit.create(EcoScanApi::class.java)
+
+    // Overpass API (HU07): puntos de acopio cercanos. Reutiliza el mismo Retrofit y OkHttp;
+    // la URL completa va en la anotación @GET de OverpassApi.
+    @Provides
+    @Singleton
+    fun provideOverpassApi(retrofit: Retrofit): OverpassApi = retrofit.create(OverpassApi::class.java)
 }

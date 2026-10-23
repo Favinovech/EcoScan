@@ -12,11 +12,9 @@ import pe.ecoscan.app.presentation.history.HistoryRoute
 import pe.ecoscan.app.presentation.map.MapRoute
 import pe.ecoscan.app.presentation.product.ProductDetailRoute
 import pe.ecoscan.app.presentation.profile.ProfileRoute
+import pe.ecoscan.app.presentation.report_form.ReportFormRoute
 import pe.ecoscan.app.presentation.scan.ScanRoute
 
-// Ruta del detalle de producto: no es un destino de la barra inferior (no tiene ícono ni
-// label propios), así que no se suma a la sealed class EcoScanDestination; se define aquí
-// junto al resto de rutas sueltas como "login".
 private const val PRODUCT_BARCODE_ARG = "barcode"
 private const val PRODUCT_DETAIL_ROUTE = "product/{$PRODUCT_BARCODE_ARG}"
 
@@ -58,7 +56,18 @@ fun EcoScanNavHost(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        composable(EcoScanDestination.Map.route) { MapRoute() }
+        composable(EcoScanDestination.Map.route) {
+            MapRoute(
+                onNavigateToReport = {
+                    navController.navigate("report_form")
+                }
+            )
+        }
+        composable("report_form") {
+            ReportFormRoute(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
         composable(EcoScanDestination.History.route) { HistoryRoute() }
         composable(EcoScanDestination.Profile.route) {
             ProfileRoute(

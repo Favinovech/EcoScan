@@ -39,3 +39,37 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         )
     }
 }
+
+// Versión 3 -> 4: prepara waste_records para el historial por usuario y la sincronización
+// con Firestore (HU06): dueño del registro, ID estable para Firestore, eliminación
+// pendiente y fecha de última modificación. Los registros que ya existían conservan sus
+// datos: reciben un syncId aleatorio y updatedAt = recordedAt.
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `waste_records` ADD COLUMN `userId` TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE `waste_records` ADD COLUMN `syncId` TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE `waste_records` ADD COLUMN `isDeleted` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `waste_records` ADD COLUMN `updatedAt` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL(
+            "UPDATE `waste_records` SET `syncId` = lower(hex(randomblob(16))), `updatedAt` = `recordedAt`"
+        )
+    }
+}
+
+// Versión 4 -> 5: agrega la tabla de caché de puntos de acopio para el mapa sin conexión (HU07).
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `cached_collection_points` (" +
+                    "`id` TEXT NOT NULL, " +
+                    "`name` TEXT, " +
+                    "`latitude` REAL NOT NULL, " +
+                    "`longitude` REAL NOT NULL, " +
+                    "`address` TEXT, " +
+                    "`openingHours` TEXT, " +
+                    "`acceptedMaterials` TEXT NOT NULL, " +
+                    "`cachedAt` INTEGER NOT NULL, " +
+                    "PRIMARY KEY(`id`))"
+        )
+    }
+}
