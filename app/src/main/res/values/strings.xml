@@ -42,6 +42,20 @@
     <string name="profile_sign_out">Cerrar sesión</string>
     <string name="profile_delete_account">Eliminar cuenta</string>
     <string name="profile_test_reminder">Probar recordatorio (debug)</string>
+    <string name="profile_sound_label">Sonido</string>
+    <string name="profile_vibration_label">Vibración</string>
+    <string name="profile_test_notification">Probar notificación (debug)</string>
+    <string name="profile_notification_permission_denied">No recibirás alertas porque el permiso de notificaciones está desactivado.</string>
+    <string name="profile_open_notification_settings">Abrir ajustes de notificaciones</string>
+
+    <string name="notification_channel_sound_and_vibration">Alertas con sonido y vibración</string>
+    <string name="notification_channel_vibration_only">Alertas solo con vibración</string>
+    <string name="notification_channel_sound_only">Alertas solo con sonido</string>
+    <string name="notification_channel_silent">Alertas silenciosas</string>
+    <string name="notification_reminder_title">Recordatorio de recolección</string>
+    <string name="notification_reminder_body">Hoy pasa la recolección en %1$s a las %2$s</string>
+    <string name="notification_test_title">Notificación de prueba</string>
+    <string name="notification_test_body">Así se ve una notificación con tus preferencias actuales</string>
 
     <string name="profile_photo_dialog_title">Foto de perfil</string>
     <string name="profile_photo_camera">Tomar foto</string>

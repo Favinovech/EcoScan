@@ -14,6 +14,9 @@ data class ProfileUiState(
     // Uri local de la foto recién elegida (cámara/galería) que aún no se sube.
     val pendingPhotoUri: String? = null,
     val notificationsEnabled: Boolean = true,
+    // Sonido y vibración (HU09, parte 2): preferencias del dispositivo, no del perfil.
+    val soundEnabled: Boolean = true,
+    val vibrationEnabled: Boolean = true,
     val weeklyGoalKg: Int = UserProfile.DEFAULT_WEEKLY_GOAL_KG,
     // false = hay cambios guardados solo en el dispositivo, pendientes de subir a Firebase.
     val isSynced: Boolean = true,

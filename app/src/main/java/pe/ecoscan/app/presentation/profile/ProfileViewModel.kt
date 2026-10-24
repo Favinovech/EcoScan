@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -16,15 +17,19 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pe.ecoscan.app.core.common.DispatcherProvider
+import pe.ecoscan.app.data.notification.NotificationPoster
 import pe.ecoscan.app.data.reminder.ReminderScheduler
 import pe.ecoscan.app.domain.model.User
 import pe.ecoscan.app.domain.model.UserProfile
+import pe.ecoscan.app.domain.preferences.NotificationPreferences
 import pe.ecoscan.app.domain.repository.AuthRepository
 import pe.ecoscan.app.domain.usecase.DeleteAccountUseCase
 import pe.ecoscan.app.domain.usecase.ObserveUserProfileUseCase
 import pe.ecoscan.app.domain.usecase.RefreshUserProfileUseCase
 import pe.ecoscan.app.domain.usecase.SaveUserProfileUseCase
 import javax.inject.Inject
+
+private const val TEST_NOTIFICATION_ID = 1002
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
@@ -34,7 +39,9 @@ class ProfileViewModel @Inject constructor(
     private val saveUserProfileUseCase: SaveUserProfileUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val dispatcherProvider: DispatcherProvider,
-    private val reminderScheduler: ReminderScheduler
+    private val reminderScheduler: ReminderScheduler,
+    private val notificationPreferences: NotificationPreferences,
+    private val notificationPoster: NotificationPoster
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -47,6 +54,7 @@ class ProfileViewModel @Inject constructor(
 
     init {
         observeProfile()
+        observeNotificationPreferences()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -102,6 +110,31 @@ class ProfileViewModel @Inject constructor(
 
     fun onNotificationsChange(enabled: Boolean) {
         _uiState.update { it.copy(notificationsEnabled = enabled).withDirtyFlag() }
+    }
+
+    // Sonido y vibración (HU09, parte 2): se guardan al toque, no con "Guardar cambios", porque
+    // viven en DataStore y no en el perfil (Room/Firestore).
+    private fun observeNotificationPreferences() {
+        combine(
+            notificationPreferences.soundEnabled,
+            notificationPreferences.vibrationEnabled
+        ) { sound, vibration -> sound to vibration }
+            .onEach { (sound, vibration) ->
+                _uiState.update { it.copy(soundEnabled = sound, vibrationEnabled = vibration) }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    fun onSoundChange(enabled: Boolean) {
+        viewModelScope.launch(dispatcherProvider.main) {
+            notificationPreferences.setSoundEnabled(enabled)
+        }
+    }
+
+    fun onVibrationChange(enabled: Boolean) {
+        viewModelScope.launch(dispatcherProvider.main) {
+            notificationPreferences.setVibrationEnabled(enabled)
+        }
     }
 
     fun onWeeklyGoalChange(goalKg: Int) {
@@ -192,6 +225,16 @@ class ProfileViewModel @Inject constructor(
     // Botón "Probar recordatorio" (solo en builds debug, ver ProfileScreen).
     fun onTestReminderClicked() {
         reminderScheduler.scheduleTestReminder()
+    }
+
+    // Botón "Probar notificación" (solo en builds debug, ver ProfileScreen): muestra una
+    // notificación con la combinación actual de preferencias, sin esperar a un recordatorio o
+    // un mensaje de FCM. Recibe los textos ya resueltos (stringResource) porque el ViewModel no
+    // depende de Context para recursos.
+    fun onTestNotificationClicked(title: String, body: String) {
+        viewModelScope.launch(dispatcherProvider.main) {
+            notificationPoster.post(notificationId = TEST_NOTIFICATION_ID, title = title, body = body)
+        }
     }
 
     fun clearMessages() {

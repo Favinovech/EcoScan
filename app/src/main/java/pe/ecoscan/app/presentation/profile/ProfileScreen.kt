@@ -1,6 +1,11 @@
 package pe.ecoscan.app.presentation.profile
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,13 +52,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import pe.ecoscan.app.BuildConfig
@@ -82,6 +92,37 @@ fun ProfileRoute(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     var cameraUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+
+    // HU09, parte 2: permiso POST_NOTIFICATIONS (Android 13+). Se refresca al volver de un
+    // segundo plano (por ejemplo, tras pasar por los ajustes del sistema).
+    var hasNotificationPermission by remember { mutableStateOf(hasPostNotificationsPermission(context)) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted -> hasNotificationPermission = granted }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasNotificationPermission = hasPostNotificationsPermission(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Pide el permiso en cuanto el interruptor maestro queda activo (recién cargado el perfil,
+    // o porque el usuario lo acaba de prender) y todavía no se concedió.
+    LaunchedEffect(uiState.isLoading, uiState.notificationsEnabled, hasNotificationPermission) {
+        if (!uiState.isLoading && uiState.notificationsEnabled && !hasNotificationPermission &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    val testNotificationTitle = stringResource(R.string.notification_test_title)
+    val testNotificationBody = stringResource(R.string.notification_test_body)
 
     // Galería: el selector de fotos del sistema no necesita permisos.
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -122,6 +163,8 @@ fun ProfileRoute(
         onDisplayNameChange = viewModel::onDisplayNameChange,
         onDistrictChange = viewModel::onDistrictChange,
         onNotificationsChange = viewModel::onNotificationsChange,
+        onSoundChange = viewModel::onSoundChange,
+        onVibrationChange = viewModel::onVibrationChange,
         onWeeklyGoalChange = viewModel::onWeeklyGoalChange,
         onTakePhoto = {
             val imagesDir = File(context.cacheDir, "images").apply { mkdirs() }
@@ -143,8 +186,26 @@ fun ProfileRoute(
         onSignOut = viewModel::signOut,
         onDeleteAccount = viewModel::deleteAccount,
         onTestReminder = viewModel::onTestReminderClicked,
+        onTestNotification = {
+            viewModel.onTestNotificationClicked(testNotificationTitle, testNotificationBody)
+        },
+        showNotificationPermissionWarning = uiState.notificationsEnabled && !hasNotificationPermission,
+        onOpenNotificationSettings = {
+            context.startActivity(
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            )
+        },
         modifier = modifier
     )
+}
+
+private fun hasPostNotificationsPermission(context: android.content.Context): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+    return ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.POST_NOTIFICATIONS
+    ) == PackageManager.PERMISSION_GRANTED
 }
 
 @Composable
@@ -154,6 +215,8 @@ fun ProfileScreen(
     onDisplayNameChange: (String) -> Unit,
     onDistrictChange: (String) -> Unit,
     onNotificationsChange: (Boolean) -> Unit,
+    onSoundChange: (Boolean) -> Unit = {},
+    onVibrationChange: (Boolean) -> Unit = {},
     onWeeklyGoalChange: (Int) -> Unit,
     onTakePhoto: () -> Unit,
     onPickFromGallery: () -> Unit,
@@ -161,6 +224,9 @@ fun ProfileScreen(
     onSignOut: () -> Unit,
     onDeleteAccount: (String) -> Unit,
     onTestReminder: () -> Unit = {},
+    onTestNotification: () -> Unit = {},
+    showNotificationPermissionWarning: Boolean = false,
+    onOpenNotificationSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showPhotoDialog by remember { mutableStateOf(false) }
@@ -263,6 +329,50 @@ fun ProfileScreen(
                             onCheckedChange = onNotificationsChange
                         )
                     }
+                    // HU09, parte 2: sonido y vibración solo tienen sentido si el interruptor
+                    // maestro está activo.
+                    if (uiState.notificationsEnabled) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.profile_sound_label),
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Switch(checked = uiState.soundEnabled, onCheckedChange = onSoundChange)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.profile_vibration_label),
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Switch(checked = uiState.vibrationEnabled, onCheckedChange = onVibrationChange)
+                        }
+                        if (showNotificationPermissionWarning) {
+                            Text(
+                                text = stringResource(R.string.profile_notification_permission_denied),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                            TextButton(
+                                onClick = onOpenNotificationSettings,
+                                modifier = Modifier.padding(top = 4.dp)
+                            ) {
+                                Text(stringResource(R.string.profile_open_notification_settings))
+                            }
+                        }
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = stringResource(R.string.profile_weekly_goal_format, uiState.weeklyGoalKg),
@@ -296,6 +406,14 @@ fun ProfileScreen(
                     EcoScanButton(
                         text = stringResource(R.string.profile_test_reminder),
                         onClick = onTestReminder,
+                        variant = EcoScanButtonVariant.TONAL,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    // HU09, parte 2: igual que el de arriba, solo para demostrar la notificación
+                    // sin esperar a un recordatorio o un mensaje real de FCM.
+                    EcoScanButton(
+                        text = stringResource(R.string.profile_test_notification),
+                        onClick = onTestNotification,
                         variant = EcoScanButtonVariant.TONAL,
                         modifier = Modifier.fillMaxWidth()
                     )
