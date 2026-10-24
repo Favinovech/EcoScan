@@ -113,6 +113,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.storage)
+    implementation(libs.firebase.messaging)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     testImplementation(libs.junit)
@@ -151,5 +152,8 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
     androidTestImplementation(libs.androidx.work.testing)
+
+    // DataStore (HU09, parte 2): preferencias de sonido/vibración de las notificaciones
+    implementation(libs.androidx.datastore.preferences)
 }
 

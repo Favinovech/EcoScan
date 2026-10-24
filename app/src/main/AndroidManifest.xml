@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
+    <!-- HU09, parte 2: notificaciones push (FCM) y recordatorios visuales. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- Para abrir la navegación de Google Maps desde "Cómo llegar" (HU07). -->
     <queries>
         <package android:name="com.google.android.apps.maps" />
@@ -32,6 +35,16 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
 
+        <!-- HU09, parte 2: canal e ícono que usa FCM cuando el mensaje llega con la app en
+             segundo plano y no trae su propio canal. El valor debe coincidir con
+             NotificationChannelIds.SOUND_AND_VIBRATION. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="ecoscan_sonido_vibracion" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -43,6 +56,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- HU09, parte 2: recibe los mensajes de FCM (topics "campanas" y "logros"). -->
+        <service
+            android:name=".data.notification.EcoScanMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <provider
             android:name="androidx.core.content.FileProvider"
