@@ -59,4 +59,29 @@ class ReminderTimeCalculatorTest {
 
         assertEquals(millisAt(now.plusDays(6), LocalTime.of(8, 0)) - nowMillis, delay)
     }
+
+    @Test
+    fun `si la hora programada es exactamente ahora, la proxima ocurrencia es en 7 dias`() {
+        val now = LocalDate.of(2026, 10, 19)
+        val nowMillis = millisAt(now, LocalTime.of(8, 0))
+        val schedule = CollectionSchedule(district = "Test", dayOfWeek = now.dayOfWeek, hour = 8, minute = 0)
+
+        val delay = calculateInitialDelayMillis(schedule, nowMillis, lima)
+
+        assertEquals(millisAt(now.plusDays(7), LocalTime.of(8, 0)) - nowMillis, delay)
+    }
+
+    @Test
+    fun `cambiar de distrito cambia la hora de la proxima ocurrencia`() {
+        val now = LocalDate.of(2026, 10, 19)
+        val nowMillis = millisAt(now, LocalTime.of(6, 0))
+        val miraflores = CollectionSchedule(district = "Miraflores", dayOfWeek = now.dayOfWeek, hour = 8)
+        val surco = CollectionSchedule(district = "Surco", dayOfWeek = now.dayOfWeek, hour = 10)
+
+        val delayMiraflores = calculateInitialDelayMillis(miraflores, nowMillis, lima)
+        val delaySurco = calculateInitialDelayMillis(surco, nowMillis, lima)
+
+        assertEquals(millisAt(now, LocalTime.of(8, 0)) - nowMillis, delayMiraflores)
+        assertEquals(millisAt(now, LocalTime.of(10, 0)) - nowMillis, delaySurco)
+    }
 }

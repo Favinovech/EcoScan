@@ -1,16 +1,17 @@
 package pe.ecoscan.app.data.sync
 
 import com.google.firebase.firestore.FirebaseFirestoreException
+import pe.ecoscan.app.domain.sync.SyncErrorType
 import java.io.IOException
 
-// Decide si un fallo al sincronizar merece reintento (problema de red o del servidor,
-// probablemente transitorio) o si hay que darlo por perdido (datos inválidos u otro error
-// permanente, en el que reintentar no cambiaría el resultado).
-// Función pura para poder probarla con JUnit sin levantar un Worker.
-fun isTransientSyncError(error: Throwable): Boolean = when (error) {
-    is IOException -> true
-    is FirebaseFirestoreException -> error.code in TRANSIENT_FIRESTORE_CODES
-    else -> false
+// Traduce una excepción concreta (de red o de Firestore) al SyncErrorType del dominio, que es
+// lo único que entiende domain/sync/RetryPolicy.kt. Vive en data porque conoce tipos de
+// Firebase; el dominio solo ve TRANSIENT/PERMANENT.
+fun classifySyncError(error: Throwable): SyncErrorType = when (error) {
+    is IOException -> SyncErrorType.TRANSIENT
+    is FirebaseFirestoreException ->
+        if (error.code in TRANSIENT_FIRESTORE_CODES) SyncErrorType.TRANSIENT else SyncErrorType.PERMANENT
+    else -> SyncErrorType.PERMANENT
 }
 
 private val TRANSIENT_FIRESTORE_CODES = setOf(

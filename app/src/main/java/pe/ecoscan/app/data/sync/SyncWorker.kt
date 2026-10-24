@@ -10,11 +10,15 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import pe.ecoscan.app.domain.repository.AuthRepository
 import pe.ecoscan.app.domain.repository.ProfileRepository
+import pe.ecoscan.app.domain.sync.RetryDecision
+import pe.ecoscan.app.domain.sync.WasteRecordSyncer
+import pe.ecoscan.app.domain.sync.decideRetry
 
 // Sube a Firestore lo que quedó pendiente en Room (waste_records y el perfil) cuando
 // WasteRecordSyncCoordinator no llegó a hacerlo porque la app estaba cerrada o en segundo
 // plano. Reutiliza WasteRecordSyncer y ProfileRepository.syncPendingProfile: no duplica esa
-// lógica, solo decide cuándo reintentar según el tipo de error.
+// lógica, solo decide cuándo reintentar según el tipo de error y el número de intento
+// (domain/sync/RetryPolicy, que además tiene un tope para no reintentar para siempre).
 @HiltWorker
 class SyncWorker @AssistedInject constructor(
     @Assisted context: Context,
@@ -31,16 +35,21 @@ class SyncWorker @AssistedInject constructor(
             val wasteResult = wasteRecordSyncer.sync(uid)
             val profileResult = profileRepository.syncPendingProfile(uid)
             val failure = wasteResult.exceptionOrNull() ?: profileResult.exceptionOrNull()
-
-            when {
-                failure == null -> Result.success()
-                isTransientSyncError(failure) -> Result.retry()
-                else -> Result.failure()
-            }
+            resultFor(failure)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            if (isTransientSyncError(e)) Result.retry() else Result.failure()
+            resultFor(e)
+        }
+    }
+
+    // runAttemptCount empieza en 0 para el primer intento; decideRetry espera el número del
+    // intento que acaba de fallar (1 = el primero), de ahí el +1.
+    private fun resultFor(failure: Throwable?): Result {
+        if (failure == null) return Result.success()
+        return when (decideRetry(classifySyncError(failure), attempt = runAttemptCount + 1)) {
+            RetryDecision.Retry -> Result.retry()
+            RetryDecision.Fail -> Result.failure()
         }
     }
 }
