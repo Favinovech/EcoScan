@@ -31,4 +31,6 @@ class FakeProfileRepository : ProfileRepository {
         profileFlow.value = null
         return Result.success(Unit)
     }
+
+    override suspend fun syncPendingProfile(uid: String): Result<Unit> = Result.success(Unit)
 }

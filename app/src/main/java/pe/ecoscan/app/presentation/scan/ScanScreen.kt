@@ -130,29 +130,33 @@ fun ScanScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when {
-                !uiState.hasCameraPermission -> {
-                    EcoScanEmptyState(
-                        message = "Se requiere acceso a la cámara para escanear residuos",
-                        actionLabel = "Conceder permiso",
-                        onAction = onRequestPermission
-                    )
-                }
+            if (!uiState.hasCameraPermission) {
+                EcoScanEmptyState(
+                    message = "Se requiere acceso a la cámara para escanear residuos",
+                    actionLabel = "Conceder permiso",
+                    onAction = onRequestPermission
+                )
+            } else {
+                // La cámara se mantiene compuesta siempre; el resultado o el error se
+                // dibujan encima, nunca la reemplazan en el árbol de composición.
+                CameraPreviewView(
+                    onCapture = onCapture,
+                    isAnalyzing = uiState.isAnalyzing,
+                    captureEnabled = uiState.capturedBitmap == null
+                )
 
-                uiState.capturedBitmap != null -> {
+                if (uiState.classificationError != null) {
+                    ClassificationErrorPanel(
+                        message = uiState.classificationError,
+                        onRetry = onReset
+                    )
+                } else if (uiState.capturedBitmap != null && uiState.classification != null) {
                     ScanResultContent(
                         uiState = uiState,
                         onCategorySelect = onCategorySelect,
                         onSaveHistory = onSaveHistory,
                         onReset = onReset,
                         onConsultarProducto = onConsultarProducto
-                    )
-                }
-
-                else -> {
-                    CameraPreviewView(
-                        onCapture = onCapture,
-                        isAnalyzing = uiState.isAnalyzing
                     )
                 }
             }
@@ -163,7 +167,8 @@ fun ScanScreen(
 @Composable
 private fun CameraPreviewView(
     onCapture: (Bitmap) -> Unit,
-    isAnalyzing: Boolean
+    isAnalyzing: Boolean,
+    captureEnabled: Boolean
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -215,7 +220,7 @@ private fun CameraPreviewView(
             ) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
-        } else {
+        } else if (captureEnabled) {
             FloatingActionButton(
                 onClick = {
                     takePhoto(context, imageCapture, onCapture)
@@ -267,6 +272,37 @@ private fun takePhoto(
 }
 
 private fun imageProxyCloseOnError(e: ImageCaptureException) { }
+
+@Composable
+private fun ClassificationErrorPanel(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f)),
+        contentAlignment = Alignment.Center
+    ) {
+        EcoScanCard(modifier = Modifier.padding(24.dp)) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                EcoScanButton(
+                    text = "Reintentar",
+                    onClick = onRetry,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun ScanResultContent(

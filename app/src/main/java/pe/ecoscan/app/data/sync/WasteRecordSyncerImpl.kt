@@ -13,6 +13,7 @@ import pe.ecoscan.app.core.common.DispatcherProvider
 import pe.ecoscan.app.data.local.dao.WasteRecordDao
 import pe.ecoscan.app.data.local.entity.WasteRecordEntity
 import pe.ecoscan.app.domain.model.WasteCategory
+import pe.ecoscan.app.domain.sync.WasteRecordSyncer
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,20 +25,21 @@ private const val RECORDS_COLLECTION = "waste_records"
 private const val BATCH_SIZE = 400
 private const val REMOTE_TIMEOUT_MS = 15_000L
 
-// Sincroniza los registros de residuos de un usuario entre Room y Firestore
-// (users/{uid}/waste_records/{syncId}). Primero sube los cambios locales y luego
-// descarga los remotos. Ante un conflicto gana la modificación más reciente (updatedAt).
+// Implementación real de WasteRecordSyncer (domain/sync): sincroniza los registros de residuos
+// de un usuario entre Room y Firestore (users/{uid}/waste_records/{syncId}). Primero sube los
+// cambios locales y luego descarga los remotos. Ante un conflicto gana la modificación más
+// reciente (updatedAt).
 @Singleton
-class WasteRecordSyncer @Inject constructor(
+class WasteRecordSyncerImpl @Inject constructor(
     private val dao: WasteRecordDao,
     private val firestore: FirebaseFirestore,
     private val dispatcherProvider: DispatcherProvider
-) {
+) : WasteRecordSyncer {
 
     // Evita dos sincronizaciones al mismo tiempo.
     private val mutex = Mutex()
 
-    suspend fun sync(uid: String): Result<Unit> = mutex.withLock {
+    override suspend fun sync(uid: String): Result<Unit> = mutex.withLock {
         withContext(dispatcherProvider.io) {
             try {
                 push(uid)

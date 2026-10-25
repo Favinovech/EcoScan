@@ -1,5 +1,7 @@
 package pe.ecoscan.app.presentation.profile
 
+import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -15,7 +17,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import pe.ecoscan.app.core.common.DispatcherProvider
+import pe.ecoscan.app.data.notification.NotificationPoster
+import pe.ecoscan.app.data.reminder.ReminderScheduler
 import pe.ecoscan.app.data.repository.FakeAuthRepository
+import pe.ecoscan.app.data.repository.FakeNotificationPreferences
 import pe.ecoscan.app.data.repository.FakeProfileRepository
 import pe.ecoscan.app.domain.model.UserProfile
 import pe.ecoscan.app.domain.usecase.DeleteAccountUseCase
@@ -36,6 +41,9 @@ class ProfileViewModelTest {
 
     private lateinit var authRepository: FakeAuthRepository
     private lateinit var profileRepository: FakeProfileRepository
+    private lateinit var reminderScheduler: ReminderScheduler
+    private lateinit var notificationPreferences: FakeNotificationPreferences
+    private lateinit var notificationPoster: NotificationPoster
     private lateinit var viewModel: ProfileViewModel
 
     @Before
@@ -43,13 +51,19 @@ class ProfileViewModelTest {
         Dispatchers.setMain(testDispatcher)
         authRepository = FakeAuthRepository()
         profileRepository = FakeProfileRepository()
+        reminderScheduler = mockk(relaxed = true)
+        notificationPreferences = FakeNotificationPreferences()
+        notificationPoster = mockk(relaxed = true)
         viewModel = ProfileViewModel(
             authRepository = authRepository,
             observeUserProfileUseCase = ObserveUserProfileUseCase(profileRepository),
             refreshUserProfileUseCase = RefreshUserProfileUseCase(profileRepository),
             saveUserProfileUseCase = SaveUserProfileUseCase(profileRepository),
             deleteAccountUseCase = DeleteAccountUseCase(authRepository, profileRepository),
-            dispatcherProvider = dispatcherProvider
+            dispatcherProvider = dispatcherProvider,
+            reminderScheduler = reminderScheduler,
+            notificationPreferences = notificationPreferences,
+            notificationPoster = notificationPoster
         )
     }
 
@@ -136,5 +150,12 @@ class ProfileViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isSignedOut)
+    }
+
+    @Test
+    fun `probar recordatorio encola el worker de prueba`() {
+        viewModel.onTestReminderClicked()
+
+        verify { reminderScheduler.scheduleTestReminder() }
     }
 }

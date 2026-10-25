@@ -16,6 +16,7 @@ import pe.ecoscan.app.data.local.dao.WasteRecordDao
 import pe.ecoscan.app.data.local.entity.WasteRecordEntity
 import pe.ecoscan.app.data.mapper.toDomain
 import pe.ecoscan.app.data.mapper.toEntity
+import pe.ecoscan.app.data.sync.SyncScheduler
 import pe.ecoscan.app.domain.model.WasteRecord
 import pe.ecoscan.app.domain.repository.AuthRepository
 import pe.ecoscan.app.domain.repository.WasteRecordRepository
@@ -23,11 +24,13 @@ import java.util.UUID
 import javax.inject.Inject
 
 // Offline-first (HU06): la pantalla siempre lee y escribe en Room. La subida a Firestore la
-// hace WasteRecordSyncCoordinator en segundo plano cuando hay conexión.
+// hace WasteRecordSyncCoordinator mientras la app está abierta; syncScheduler.enqueuePendingSync()
+// (HU09) encola además un SyncWorker para el caso en que se cierre antes de lograrlo.
 class WasteRecordRepositoryImpl @Inject constructor(
     private val dao: WasteRecordDao,
     private val authRepository: AuthRepository,
-    private val dispatcherProvider: DispatcherProvider
+    private val dispatcherProvider: DispatcherProvider,
+    private val syncScheduler: SyncScheduler
 ) : WasteRecordRepository {
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -60,6 +63,7 @@ class WasteRecordRepositoryImpl @Inject constructor(
                     updatedAt = System.currentTimeMillis()
                 )
                 dao.insert(entity)
+                syncScheduler.enqueuePendingSync()
             }
         }
     }
@@ -76,8 +80,12 @@ class WasteRecordRepositoryImpl @Inject constructor(
                     points = record.points,
                     updatedAt = System.currentTimeMillis()
                 )
-                if (rows > 0) Result.success(Unit)
-                else Result.failure(IllegalStateException("El registro ya no existe"))
+                if (rows > 0) {
+                    syncScheduler.enqueuePendingSync()
+                    Result.success(Unit)
+                } else {
+                    Result.failure(IllegalStateException("El registro ya no existe"))
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -92,6 +100,7 @@ class WasteRecordRepositoryImpl @Inject constructor(
             try {
                 // No se borra la fila: se marca para propagar la eliminación a Firestore.
                 dao.markDeleted(localId, System.currentTimeMillis())
+                syncScheduler.enqueuePendingSync()
                 Result.success(Unit)
             } catch (e: CancellationException) {
                 throw e
