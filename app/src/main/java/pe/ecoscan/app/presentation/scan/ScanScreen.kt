@@ -32,7 +32,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -178,8 +177,8 @@ private fun CameraPreviewView(
         AndroidView(
             factory = { ctx ->
                 val previewView = PreviewView(ctx).apply {
-                    // En API 34 PERFORMANCE gestiona el viewport sin desfasar la textura
-                    implementationMode = PreviewView.ImplementationMode.PERFORMANCE
+                    // Modo COMPATIBLE para evitar el cierre por abandono de buffer en Compose/Emulador
+                    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
                     scaleType = PreviewView.ScaleType.FILL_CENTER
                 }
                 val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
@@ -238,6 +237,7 @@ private fun CameraPreviewView(
         }
     }
 }
+
 private fun takePhoto(
     context: Context,
     imageCapture: ImageCapture,
@@ -378,6 +378,8 @@ private fun ScanResultContent(
                     style = MaterialTheme.typography.titleSmall
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // Fila 1
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -386,10 +388,13 @@ private fun ScanResultContent(
                         FilterChip(
                             selected = uiState.selectedCategory == cat,
                             onClick = { onCategorySelect(cat) },
-                            label = { Text(cat.name) }
+                            // Usamos cat.displayName en lugar de cat.name para mostrar el texto limpio en español
+                            label = { Text(cat.displayName) }
                         )
                     }
                 }
+
+                // Fila 2
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -398,7 +403,7 @@ private fun ScanResultContent(
                         FilterChip(
                             selected = uiState.selectedCategory == cat,
                             onClick = { onCategorySelect(cat) },
-                            label = { Text(cat.name) }
+                            label = { Text(cat.displayName) }
                         )
                     }
                 }
