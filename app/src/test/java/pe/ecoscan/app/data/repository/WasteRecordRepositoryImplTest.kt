@@ -15,6 +15,7 @@ import org.junit.Test
 import pe.ecoscan.app.core.common.DispatcherProvider
 import pe.ecoscan.app.data.local.dao.WasteRecordDao
 import pe.ecoscan.app.data.local.entity.WasteRecordEntity
+import pe.ecoscan.app.data.sync.SyncScheduler
 import pe.ecoscan.app.domain.model.User
 import pe.ecoscan.app.domain.model.WasteCategory
 import pe.ecoscan.app.domain.model.WasteRecord
@@ -33,7 +34,8 @@ class WasteRecordRepositoryImplTest {
 
     private val dao = mockk<WasteRecordDao>()
     private val authRepository = mockk<AuthRepository>()
-    private val repository = WasteRecordRepositoryImpl(dao, authRepository, fakeDispatcherProvider)
+    private val syncScheduler = mockk<SyncScheduler>(relaxed = true)
+    private val repository = WasteRecordRepositoryImpl(dao, authRepository, fakeDispatcherProvider, syncScheduler)
 
     private fun signedInAs(uid: String?) {
         every { authRepository.currentUser } returns flowOf(uid?.let { User(it, "ana@ecoscan.pe", true) })
@@ -89,6 +91,7 @@ class WasteRecordRepositoryImplTest {
                 }
             )
         }
+        coVerify { syncScheduler.enqueuePendingSync() }
     }
 
     @Test
@@ -109,6 +112,7 @@ class WasteRecordRepositoryImplTest {
 
         assertTrue(result.isSuccess)
         coVerify { dao.updateEditable(7L, WasteCategory.METAL, 2.0, 50, any()) }
+        coVerify { syncScheduler.enqueuePendingSync() }
     }
 
     @Test
@@ -129,6 +133,7 @@ class WasteRecordRepositoryImplTest {
         assertTrue(result.isSuccess)
         coVerify { dao.markDeleted(7L, any()) }
         coVerify(exactly = 0) { dao.deleteById(any()) }
+        coVerify { syncScheduler.enqueuePendingSync() }
     }
 
     @Test

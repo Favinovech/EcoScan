@@ -15,6 +15,7 @@ import pe.ecoscan.app.core.common.DispatcherProvider
 import pe.ecoscan.app.core.network.ConnectivityObserver
 import pe.ecoscan.app.data.local.dao.WasteRecordDao
 import pe.ecoscan.app.domain.repository.AuthRepository
+import pe.ecoscan.app.domain.sync.WasteRecordSyncer
 import javax.inject.Inject
 import javax.inject.Singleton
 
