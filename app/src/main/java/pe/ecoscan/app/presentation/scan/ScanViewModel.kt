@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.FileNotFoundException
 import pe.ecoscan.app.core.common.DefaultDispatcherProvider
 import pe.ecoscan.app.core.common.DispatcherProvider
 import pe.ecoscan.app.data.repository.WasteRecordRepositoryImpl
@@ -41,6 +42,7 @@ class ScanViewModel @Inject constructor(
                     isAnalyzing = true,
                     capturedBitmap = bitmap,
                     errorMessage = null,
+                    classificationError = null,
                     detectedBarcode = null
                 )
             }
@@ -57,7 +59,7 @@ class ScanViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isAnalyzing = false,
-                        errorMessage = error.localizedMessage ?: "Error al clasificar residuo"
+                        classificationError = mapClassificationError(error)
                     )
                 }
             }
@@ -116,6 +118,7 @@ class ScanViewModel @Inject constructor(
                 selectedCategory = null,
                 isSavedSuccess = false,
                 errorMessage = null,
+                classificationError = null,
                 detectedBarcode = null
             )
         }
@@ -123,5 +126,13 @@ class ScanViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null) }
+    }
+
+    private fun mapClassificationError(error: Throwable): String {
+        return if (error is FileNotFoundException) {
+            "Modelo de clasificación no disponible"
+        } else {
+            error.localizedMessage ?: "Error al clasificar residuo"
+        }
     }
 }
