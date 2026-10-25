@@ -1,10 +1,13 @@
 package pe.ecoscan.app.presentation.scan
 
+import android.graphics.Bitmap
+import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -15,9 +18,11 @@ import org.junit.Before
 import org.junit.Test
 import pe.ecoscan.app.core.common.DispatcherProvider
 import pe.ecoscan.app.data.repository.WasteRecordRepositoryImpl
+import pe.ecoscan.app.data.scanner.BarcodeDetector
 import pe.ecoscan.app.domain.model.WasteCategory
 import pe.ecoscan.app.domain.model.WasteClassification
 import pe.ecoscan.app.domain.usecase.ClassifyWasteUseCase
+import java.io.FileNotFoundException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ScanViewModelTest {
@@ -32,6 +37,7 @@ class ScanViewModelTest {
 
     private val classifyWasteUseCase = mockk<ClassifyWasteUseCase>(relaxed = true)
     private val wasteRecordRepository = mockk<WasteRecordRepositoryImpl>(relaxed = true)
+    private val barcodeDetector = mockk<BarcodeDetector>(relaxed = true)
 
     private lateinit var viewModel: ScanViewModel
 
@@ -41,7 +47,8 @@ class ScanViewModelTest {
         viewModel = ScanViewModel(
             classifyWasteUseCase = classifyWasteUseCase,
             wasteRecordRepository = wasteRecordRepository,
-            dispatcherProvider = fakeDispatcherProvider
+            dispatcherProvider = fakeDispatcherProvider,
+            barcodeDetector = barcodeDetector
         )
     }
 
@@ -86,5 +93,24 @@ class ScanViewModelTest {
         assertNull(state.classification)
         assertNull(state.selectedCategory)
         assertFalse(state.isSavedSuccess)
+    }
+
+    @Test
+    fun `un error del clasificador no oculta la camara`() = runTest(testDispatcher) {
+        viewModel.onPermissionResult(true)
+
+        val bitmap = mockk<Bitmap>(relaxed = true)
+        coEvery { classifyWasteUseCase(bitmap) } returns
+            Result.failure(FileNotFoundException("waste_classifier.tflite"))
+        coEvery { barcodeDetector.detect(bitmap) } returns Result.success(null)
+
+        viewModel.onImageCaptured(bitmap)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("Modelo de clasificación no disponible", state.classificationError)
+        assertNull(state.classification)
+        assertFalse(state.isAnalyzing)
+        assertTrue(state.hasCameraPermission)
     }
 }
