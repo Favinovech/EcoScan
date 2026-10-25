@@ -29,14 +29,12 @@ val mapsApiKey: String = Properties().let { properties ->
 
 android {
     namespace = "pe.ecoscan.app"
-    compileSdk {
-        version = release(37)
-    }
+    compileSdk = 37 // <-- Cambia 35 por 37
 
     defaultConfig {
         applicationId = "pe.ecoscan.app"
-        minSdk = 26
-        targetSdk = 37
+        minSdk = 26     // Soporte desde Android 8.0 hasta Android 14 (API 34)
+        targetSdk = 35  // Comportamiento de ejecución oficial para Android 15
         versionCode = 1
         versionName = "1.0"
 
@@ -44,17 +42,17 @@ android {
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
-    buildTypes {
-        release {
-            optimization {
-                enable = false
-            }
-        }
+    // OBLIGATORIO para TFLite en Android 14 y 15:
+    // Evita que el empaquetador comprima el modelo, permitiendo lectura por mmap
+    androidResources {
+        noCompress += "tflite"
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -131,6 +129,7 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.googleid)
+
     // CameraX
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)

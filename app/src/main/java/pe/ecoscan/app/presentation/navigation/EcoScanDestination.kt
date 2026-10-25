@@ -48,7 +48,10 @@ sealed class EcoScanDestination(
         unselectedIcon = Icons.Outlined.Person
     )
 
+    // El getter dinámico garantiza que Scan, Map, History y Profile
+    // ya estén completamente inicializados en memoria al ser llamados.
     companion object {
-        val bottomBarDestinations = listOf(Scan, Map, History, Profile)
+        val bottomBarDestinations: List<EcoScanDestination>
+            get() = listOf(Scan, Map, History, Profile)
     }
 }

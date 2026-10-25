@@ -2,13 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Permisos de Cámara -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!-- Permisos de Ubicación (requeridos para FusedLocationProviderClient en API 34 y 35) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
     <!-- HU09, parte 2: notificaciones push (FCM) y recordatorios visuales. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -21,7 +23,6 @@
     <application
         android:name=".EcoScanApplication"
         android:allowBackup="true"
-        tools:replace="android:allowBackup"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -30,7 +31,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EcoScan">
 
-        <!-- Clave de Google Maps (HU07): se define en local.properties como MAPS_API_KEY. -->
+        <!-- OBLIGATORIO: Conecta la API Key de local.properties con Google Maps -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
@@ -48,11 +49,9 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.EcoScan"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

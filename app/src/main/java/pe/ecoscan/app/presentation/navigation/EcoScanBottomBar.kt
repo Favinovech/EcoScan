@@ -17,7 +17,7 @@ fun EcoScanBottomBar(
     modifier: Modifier = Modifier
 ) {
     NavigationBar(modifier = modifier) {
-        EcoScanDestination.bottomBarDestinations.forEach { destination ->
+        EcoScanDestination.bottomBarDestinations.filterNotNull().forEach { destination ->
             val isSelected = currentRoute == destination.route
             val label = stringResource(destination.labelRes)
             NavigationBarItem(
