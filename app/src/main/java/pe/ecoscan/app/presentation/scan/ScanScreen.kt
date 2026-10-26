@@ -316,7 +316,7 @@ private fun ScanResultContent(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxSize().background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
