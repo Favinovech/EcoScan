@@ -56,7 +56,7 @@ class CollectionPointRepositoryImplTest {
 
     @Test
     fun `con red devuelve los puntos ordenados por distancia y los guarda en cache`() = runTest(testDispatcher) {
-        coEvery { api.getCollectionPoints(any()) } returns
+        coEvery { api.getCollectionPoints(any(), any()) } returns
                 OverpassResponseDto(elements = listOf(farElement, nearElement))
         coEvery { dao.insertAll(any()) } returns Unit
         coEvery { dao.deleteOlderThan(any()) } returns Unit
@@ -72,7 +72,7 @@ class CollectionPointRepositoryImplTest {
 
     @Test
     fun `los elementos sin coordenadas se ignoran`() = runTest(testDispatcher) {
-        coEvery { api.getCollectionPoints(any()) } returns OverpassResponseDto(
+        coEvery { api.getCollectionPoints(any(), any()) } returns OverpassResponseDto(
             elements = listOf(nearElement, OverpassElementDto(type = "node", id = 9L))
         )
         coEvery { dao.insertAll(any()) } returns Unit
@@ -85,18 +85,18 @@ class CollectionPointRepositoryImplTest {
 
     @Test
     fun `la consulta enviada incluye el radio y la ubicacion`() = runTest(testDispatcher) {
-        coEvery { api.getCollectionPoints(any()) } returns OverpassResponseDto(elements = emptyList())
+        coEvery { api.getCollectionPoints(any(), any()) } returns OverpassResponseDto(elements = emptyList())
         coEvery { dao.insertAll(any()) } returns Unit
         coEvery { dao.deleteOlderThan(any()) } returns Unit
 
         repository.getNearbyPoints(center, radius)
 
-        coVerify { api.getCollectionPoints(match { it.contains("around:5000,-12.1,-77.0") }) }
+        coVerify { api.getCollectionPoints(any(), match { it.contains("around:5000,-12.1,-77.0") }) }
     }
 
     @Test
     fun `sin red devuelve los puntos guardados marcados como desfasados`() = runTest(testDispatcher) {
-        coEvery { api.getCollectionPoints(any()) } throws IOException()
+        coEvery { api.getCollectionPoints(any(), any()) } throws IOException()
         coEvery { dao.getInBounds(any(), any(), any(), any()) } returns
                 listOf(cachedEntity("node/10", -76.9955))
 
@@ -109,7 +109,7 @@ class CollectionPointRepositoryImplTest {
 
     @Test
     fun `de la cache solo se devuelven los puntos dentro del radio`() = runTest(testDispatcher) {
-        coEvery { api.getCollectionPoints(any()) } throws IOException()
+        coEvery { api.getCollectionPoints(any(), any()) } throws IOException()
         // Cae dentro del rectángulo de búsqueda pero fuera del círculo de 5 km.
         coEvery { dao.getInBounds(any(), any(), any(), any()) } returns
                 listOf(cachedEntity("lejos", -76.9500), cachedEntity("cerca", -76.9955))
@@ -121,7 +121,7 @@ class CollectionPointRepositoryImplTest {
 
     @Test
     fun `sin red y sin cache devuelve error de conexion`() = runTest(testDispatcher) {
-        coEvery { api.getCollectionPoints(any()) } throws IOException()
+        coEvery { api.getCollectionPoints(any(), any()) } throws IOException()
         coEvery { dao.getInBounds(any(), any(), any(), any()) } returns emptyList()
 
         val result = repository.getNearbyPoints(center, radius)
@@ -131,7 +131,7 @@ class CollectionPointRepositoryImplTest {
 
     @Test
     fun `un tiempo de espera agotado sin cache devuelve error de timeout`() = runTest(testDispatcher) {
-        coEvery { api.getCollectionPoints(any()) } throws SocketTimeoutException()
+        coEvery { api.getCollectionPoints(any(), any()) } throws SocketTimeoutException()
         coEvery { dao.getInBounds(any(), any(), any(), any()) } returns emptyList()
 
         val result = repository.getNearbyPoints(center, radius)
@@ -141,7 +141,7 @@ class CollectionPointRepositoryImplTest {
 
     @Test
     fun `el codigo 429 se informa como servicio saturado`() = runTest(testDispatcher) {
-        coEvery { api.getCollectionPoints(any()) } throws
+        coEvery { api.getCollectionPoints(any(), any()) } throws
                 HttpException(Response.error<OverpassResponseDto>(429, "".toResponseBody(null)))
         coEvery { dao.getInBounds(any(), any(), any(), any()) } returns emptyList()
 
@@ -153,7 +153,7 @@ class CollectionPointRepositoryImplTest {
 
     @Test
     fun `una respuesta que no es JSON se trata como error del servidor`() = runTest(testDispatcher) {
-        coEvery { api.getCollectionPoints(any()) } throws JsonSyntaxException("<html>")
+        coEvery { api.getCollectionPoints(any(), any()) } throws JsonSyntaxException("<html>")
         coEvery { dao.getInBounds(any(), any(), any(), any()) } returns emptyList()
 
         val result = repository.getNearbyPoints(center, radius)
@@ -163,7 +163,7 @@ class CollectionPointRepositoryImplTest {
 
     @Test
     fun `un error del servidor con cache devuelve los puntos guardados`() = runTest(testDispatcher) {
-        coEvery { api.getCollectionPoints(any()) } throws
+        coEvery { api.getCollectionPoints(any(), any()) } throws
                 HttpException(Response.error<OverpassResponseDto>(504, "".toResponseBody(null)))
         coEvery { dao.getInBounds(any(), any(), any(), any()) } returns
                 listOf(cachedEntity("node/10", -76.9955))
@@ -171,5 +171,33 @@ class CollectionPointRepositoryImplTest {
         val result = repository.getNearbyPoints(center, radius)
 
         assertTrue((result as Resource.Success).isStale)
+    }
+
+    @Test
+    fun `si el primer servidor falla usa el siguiente`() = runTest(testDispatcher) {
+        coEvery { api.getCollectionPoints(OverpassApi.ENDPOINTS[0], any()) } throws
+                HttpException(Response.error<OverpassResponseDto>(504, "".toResponseBody(null)))
+        coEvery { api.getCollectionPoints(OverpassApi.ENDPOINTS[1], any()) } returns
+                OverpassResponseDto(elements = listOf(nearElement))
+        coEvery { dao.insertAll(any()) } returns Unit
+        coEvery { dao.deleteOlderThan(any()) } returns Unit
+
+        val result = repository.getNearbyPoints(center, radius) as Resource.Success
+
+        assertFalse(result.isStale)
+        assertEquals(listOf("Cerca"), result.data.map { it.name })
+    }
+
+    @Test
+    fun `un remark de error con HTTP 200 se trata como fallo del servidor`() = runTest(testDispatcher) {
+        coEvery { api.getCollectionPoints(any(), any()) } returns OverpassResponseDto(
+            elements = emptyList(),
+            remark = "runtime error: Query timed out in \"query\" at line 1 after 26 seconds."
+        )
+        coEvery { dao.getInBounds(any(), any(), any(), any()) } returns emptyList()
+
+        val result = repository.getNearbyPoints(center, radius)
+
+        assertEquals(ErrorType.SERVER_ERROR, (result as Resource.Error).type)
     }
 }
