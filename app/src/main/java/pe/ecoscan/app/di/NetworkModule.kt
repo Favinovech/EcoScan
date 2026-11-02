@@ -20,6 +20,8 @@ import javax.inject.Singleton
 private const val BASE_URL = "https://world.openfoodfacts.org/api/v2/"
 private const val USER_AGENT = "EcoScan/1.0 (proyecto academico UNMSM)"
 private const val TIMEOUT_SECONDS = 15L
+private const val OVERPASS_CONNECT_TIMEOUT_SECONDS = 10L
+private const val OVERPASS_READ_TIMEOUT_SECONDS = 30L
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -63,9 +65,20 @@ object NetworkModule {
     @Singleton
     fun provideEcoScanApi(retrofit: Retrofit): EcoScanApi = retrofit.create(EcoScanApi::class.java)
 
-    // Overpass API (HU07): puntos de acopio cercanos. Reutiliza el mismo Retrofit y OkHttp;
-    // la URL completa va en la anotación @GET de OverpassApi.
+    // Overpass API (HU07): puntos de acopio cercanos. Comparte el OkHttp (User-Agent y logs)
+    // pero con mas tiempo de lectura: una consulta de 5 km en Lima puede tardar mas de 15 s.
+    // El servidor se elige por llamada con @Url (ver OverpassApi.ENDPOINTS).
     @Provides
     @Singleton
-    fun provideOverpassApi(retrofit: Retrofit): OverpassApi = retrofit.create(OverpassApi::class.java)
+    fun provideOverpassApi(okHttpClient: OkHttpClient): OverpassApi = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .client(
+            okHttpClient.newBuilder()
+                .connectTimeout(OVERPASS_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .readTimeout(OVERPASS_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .build()
+        )
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(OverpassApi::class.java)
 }
