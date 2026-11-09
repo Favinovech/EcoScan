@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import pe.ecoscan.app.presentation.auth.LoginRoute
+import pe.ecoscan.app.presentation.dashboard.DashboardRoute
 import pe.ecoscan.app.presentation.history.HistoryRoute
 import pe.ecoscan.app.presentation.map.MapRoute
 import pe.ecoscan.app.presentation.product.ProductDetailRoute
@@ -68,7 +69,18 @@ fun EcoScanNavHost(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        composable(EcoScanDestination.History.route) { HistoryRoute() }
+        composable("dashboard") {
+            DashboardRoute(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(EcoScanDestination.History.route) {
+            HistoryRoute(
+                onNavigateToDashboard = {
+                    navController.navigate("dashboard")
+                }
+            )
+        }
         composable(EcoScanDestination.Profile.route) {
             ProfileRoute(
                 onSignedOut = {

@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.CloudOff
@@ -51,14 +52,10 @@ import pe.ecoscan.app.core.designsystem.theme.EcoScanTheme
 import pe.ecoscan.app.domain.model.WasteCategory
 import pe.ecoscan.app.domain.model.WasteRecord
 
-// Punto de entrada con Hilt. Se llama solo aquí para que HistoryScreen sea previsualizable
-// y testeable sin necesidad de un contenedor de inyección.
-// hiltViewModel() de androidx.hilt.navigation.compose está deprecado a favor de
-// androidx.hilt.lifecycle.viewmodel.compose, pero ese artefacto sigue en alpha/beta;
-// nos quedamos en la versión estable hasta que haya un release estable.
 @Suppress("DEPRECATION")
 @Composable
 fun HistoryRoute(
+    onNavigateToDashboard: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
@@ -75,6 +72,7 @@ fun HistoryRoute(
     HistoryScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
+        onNavigateToDashboard = onNavigateToDashboard,
         onCategorySelected = viewModel::onCategorySelected,
         onDatePresetSelected = viewModel::onDatePresetSelected,
         onCustomDateRangeSelected = viewModel::onCustomDateRangeSelected,
@@ -94,6 +92,7 @@ fun HistoryScreen(
     uiState: HistoryUiState,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    onNavigateToDashboard: () -> Unit = {},
     onCategorySelected: (WasteCategory?) -> Unit = {},
     onDatePresetSelected: (DatePreset) -> Unit = {},
     onCustomDateRangeSelected: (Long, Long?) -> Unit = { _, _ -> },
@@ -109,13 +108,24 @@ fun HistoryScreen(
 
     Scaffold(
         modifier = modifier,
-        topBar = { EcoScanTopBar(title = stringResource(R.string.history_title)) },
+        topBar = {
+            EcoScanTopBar(
+                title = stringResource(R.string.history_title),
+                actions = {
+                    IconButton(onClick = onNavigateToDashboard) {
+                        Icon(
+                            imageVector = Icons.Default.BarChart,
+                            contentDescription = "Ver impacto ambiental"
+                        )
+                    }
+                }
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         when {
             uiState.isLoading -> EcoScanLoading(modifier = Modifier.padding(paddingValues))
 
-            // Sin ningún registro (distinto de "el filtro no encontró nada").
             uiState.totalRecords == 0 -> EcoScanEmptyState(
                 message = uiState.errorMessage ?: stringResource(R.string.history_empty_message),
                 modifier = Modifier.padding(paddingValues)
